@@ -7,8 +7,9 @@ things: **what was signed**, and **that the signed file has not changed since**.
 Alter one byte of a sealed document — a digit in a price, a word in a clause, a
 scrap of metadata — and verification fails.
 
-> **Status:** Phase 1 of 5. The signing engine and command line tool are complete
-> and tested. The browser interface is next. See [Roadmap](#roadmap).
+> **Status:** Phase 2 of 5. The signing engine, the command line tool and the
+> browser app are complete and tested. Office document support is next. See
+> [Roadmap](#roadmap).
 
 ---
 
@@ -49,10 +50,31 @@ instruments and some court filings; don't use this for those.
 
 ---
 
-## Quick start
+## The browser app
 
 ```bash
 npm install
+npm run dev --workspace @sealmark/web
+```
+
+Open the document, type your name, pick a field, and click where it belongs.
+Fields drag to reposition, resize from the corner, and nudge with the arrow keys.
+The on-page preview uses the same font and the same fitting rules as the stamped
+output, so what you place is what you get.
+
+Nothing is uploaded. The document is read through a file picker, processed in the
+page, and written back out as a download — open the Network tab while you sign
+and you will see only the app's own assets load.
+
+In production the `connect-src 'self'` rule in
+[`packages/web/public/_headers`](packages/web/public/_headers) makes that a
+browser-enforced constraint rather than a promise. It is read automatically by
+Cloudflare Pages and Netlify; on another host, serve the same
+`Content-Security-Policy` header.
+
+## Command line
+
+```bash
 npx tsx scripts/make-fixture.ts      # generates a sample agreement to sign
 ```
 
@@ -129,31 +151,47 @@ packages/core/   The signing engine. No filesystem, no network, no Buffer.
                  Hashing is Web Crypto; PDF work is pdf-lib. Runs unchanged in
                  Node and in the browser.
 packages/cli/    Filesystem I/O, argument parsing, terminal output.
+packages/web/    React app: pdf.js rendering, click-to-place fields, downloads.
 scripts/         Development aids (fixture generation, PDF text dumping).
 ```
 
-The core is isomorphic on purpose. Phase 2's browser app imports the same
-`signDocument` and `verifyDocument` with no changes, which is what makes the
-privacy position below achievable rather than aspirational.
+The core is isomorphic on purpose, and the browser app imports the same
+`signDocument` it does — no parallel implementation, no drift. A document signed
+in the browser and the same document signed by the CLI produce identical hashes.
+
+Two details that are easy to get wrong and are therefore covered by tests:
+
+**Coordinates.** PDF user space has its origin at the bottom-left; the DOM uses
+the top-left. Field positions are stored in PDF points, because that is what gets
+stamped, and converted for display only.
+
+**Text fitting.** A script face is much taller than its point size, so fitting on
+width alone previews far larger than it stamps. The browser measures the font
+bounding box to match what pdf-lib does.
 
 ### Privacy position
 
-The browser build will be a static site that does all work client-side: documents
-are read through a file picker, processed in the page, and written back out as a
-download. No upload, enforced by a Content-Security-Policy that blocks outbound
-connections rather than merely promising not to make them, and verifiable by
-anyone with the Network tab open.
+The app is a static site that does all work client-side. No upload, enforced by a
+Content-Security-Policy that blocks outbound connections rather than merely
+promising not to make them, and verifiable by anyone with the Network tab open.
 
 Trusted timestamping, when added, will send a SHA-256 hash to a timestamp
 authority — never the document, and only when the user enables it.
+
+### Known cost
+
+The production bundle is around 660 KB gzipped, dominated by pdf.js, pdf-lib and
+fontkit, plus a 457 KB font. Acceptable for an app, heavy for a first visit.
+Code-splitting the signing path and subsetting the font are queued for phase 4.
 
 ---
 
 ## Development
 
 ```bash
-npm test           # vitest, 41 tests
+npm test           # vitest, 53 tests
 npm run typecheck  # tsc --noEmit across workspaces
+npm run build      # production build of the web app
 ```
 
 ```bash
@@ -165,8 +203,8 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 ## Roadmap
 
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
-2. **Browser interface** — render the PDF, click to place fields, live preview, download.
-3. **Office documents** — `.docx`, `.odt`, `.rtf` converted to PDF via LibreOffice, then signed.
+2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
+3. **Office documents** — `.docx`, `.odt`, `.rtf` converted to PDF via LibreOffice, then signed. Needs a desktop shell, since no browser can do the conversion.
 4. **Evidence hardening** — RFC 3161 trusted timestamps, signed-document archive, offline PWA.
 5. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 
