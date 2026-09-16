@@ -1,0 +1,28 @@
+{
+  "name": "sealmark",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tamper-evident electronic signature tool for PDFs and documents.",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "sealmark": "node --import tsx packages/cli/src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "pdfjs-dist": "^4.10.38",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

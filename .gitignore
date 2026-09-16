@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.env
+.env.local
+out/
+coverage/
+
+# Signed output produced by local runs
+fixtures/out/
+*.sealmark.json
+!fixtures/**/*.sealmark.json
