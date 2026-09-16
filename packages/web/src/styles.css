@@ -9,9 +9,23 @@
   --ink-faint: #8a9099;
   --line: #e2ded7;
   --line-strong: #cfc9c0;
+  /* Brand only: the wax seal in the wordmark. */
   --seal: #8f2d3f;
-  --seal-ink: #ffffff;
-  --seal-wash: #f8ebed;
+
+  /* Interactive: buttons, field outlines, focus. Ink blue, because that is
+     what people sign in - and it leaves red free to mean "error". */
+  --accent: #26428f;
+  --accent-ink: #ffffff;
+  --accent-wash: #ecf0fb;
+  --accent-tint: rgb(38 66 143 / 7%);
+
+  /* Field overlays live on the document, which is white in every theme. These
+     deliberately do NOT flip in dark mode - lightening them would drop their
+     contrast against the page they sit on. */
+  --field-ink: #26428f;
+  --field-on-ink: #ffffff;
+  --field-tint: rgb(38 66 143 / 8%);
+  --field-handle-bg: #ffffff;
   --ok: #1d7a55;
   --ok-wash: #e8f4ee;
   --danger: #a8323f;
@@ -40,8 +54,10 @@
     --line: #2b2e37;
     --line-strong: #3a3e49;
     --seal: #d4697d;
-    --seal-ink: #1b1d24;
-    --seal-wash: #2a1f24;
+    --accent: #8ba6f7;
+    --accent-ink: #121620;
+    --accent-wash: #1b2136;
+    --accent-tint: rgb(139 166 247 / 12%);
     --ok: #4cbf8f;
     --ok-wash: #16241e;
     --danger: #e2717d;
@@ -90,7 +106,7 @@ button, input { font: inherit; color: inherit; }
   font-size: 15px;
 }
 
-.wordmark svg { display: block; }
+.wordmark svg { display: block; color: var(--seal); }
 
 .header-note {
   margin-left: auto;
@@ -134,7 +150,7 @@ button, input { font: inherit; color: inherit; }
 
 .dropzone:hover,
 .dropzone:focus-within,
-.dropzone.is-over { border-color: var(--seal); background: var(--seal-wash); }
+.dropzone.is-over { border-color: var(--accent); background: var(--accent-wash); }
 
 .dropzone strong { display: block; font-size: 15px; margin-bottom: 4px; }
 .dropzone span { color: var(--ink-soft); font-size: 13px; }
@@ -231,9 +247,9 @@ button, input { font: inherit; color: inherit; }
 
 .field {
   position: absolute;
-  border: 1.5px solid var(--seal);
+  border: 1.5px solid var(--field-ink);
   border-radius: 3px;
-  background: rgb(143 45 63 / 7%);
+  background: var(--field-tint);
   cursor: grab;
   display: flex;
   align-items: center;
@@ -242,7 +258,7 @@ button, input { font: inherit; color: inherit; }
   padding: 0;
 }
 
-.field:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+.field:focus-visible { outline: 2px solid var(--field-ink); outline-offset: 2px; }
 .field.is-dragging { cursor: grabbing; }
 
 .field-text {
@@ -250,7 +266,8 @@ button, input { font: inherit; color: inherit; }
   padding: 0 2px;
   white-space: nowrap;
   overflow: hidden;
-  color: var(--ink);
+  /* On the page, not in the chrome: always dark on white. */
+  color: #16181d;
   line-height: 1;
   pointer-events: none;
 }
@@ -266,8 +283,8 @@ button, input { font: inherit; color: inherit; }
   line-height: 1;
   padding: 3px 5px;
   border-radius: 3px 3px 0 0;
-  background: var(--seal);
-  color: var(--seal-ink);
+  background: var(--field-ink);
+  color: var(--field-on-ink);
   white-space: nowrap;
   letter-spacing: 0.02em;
   pointer-events: none;
@@ -284,8 +301,8 @@ button, input { font: inherit; color: inherit; }
   place-items: center;
   border: none;
   border-radius: 3px 3px 0 0;
-  background: var(--seal);
-  color: var(--seal-ink);
+  background: var(--field-ink);
+  color: var(--field-on-ink);
   cursor: pointer;
   opacity: 0.78;
 }
@@ -298,9 +315,9 @@ button, input { font: inherit; color: inherit; }
   bottom: -5px;
   width: 11px;
   height: 11px;
-  border: 1.5px solid var(--seal);
+  border: 1.5px solid var(--field-ink);
   border-radius: 2px;
-  background: var(--surface);
+  background: var(--field-handle-bg);
   cursor: nwse-resize;
   touch-action: none;
   padding: 0;
@@ -344,8 +361,8 @@ button, input { font: inherit; color: inherit; }
 
 .row input:focus {
   outline: none;
-  border-color: var(--seal);
-  box-shadow: 0 0 0 3px var(--seal-wash);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .signature-preview {
@@ -386,8 +403,8 @@ button, input { font: inherit; color: inherit; }
   transition: border-color 120ms, background 120ms, color 120ms;
 }
 
-.tool:hover { border-color: var(--seal); }
-.tool.is-armed { border-color: var(--seal); background: var(--seal-wash); color: var(--seal); }
+.tool:hover { border-color: var(--accent); }
+.tool.is-armed { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
 .tool svg { flex: 0 0 auto; }
 
 .hint { margin: 12px 0 0; font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
@@ -438,14 +455,14 @@ button, input { font: inherit; color: inherit; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .btn-primary {
-  background: var(--seal);
-  border-color: var(--seal);
-  color: var(--seal-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
   width: 100%;
   padding: 11px 16px;
 }
 
-.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--seal) 88%, #000); }
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, #000); }
 .btn-icon { padding: 6px 9px; }
 
 /* ---------------------------------------------------------------- result -- */
@@ -498,7 +515,7 @@ button, input { font: inherit; color: inherit; }
 .keep-note {
   margin-top: 16px;
   padding: 12px 14px;
-  background: var(--seal-wash);
+  background: var(--accent-wash);
   border-radius: var(--radius-sm);
   font-size: 12.5px;
   color: var(--ink-soft);
