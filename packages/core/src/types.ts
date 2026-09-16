@@ -1,3 +1,5 @@
+import type { PageSize } from './convert.js';
+
 /** Field kinds Sealmark can stamp onto a document. */
 export type FieldKind = 'signature' | 'initials' | 'date' | 'text';
 
@@ -29,15 +31,74 @@ export interface Signer {
   email?: string;
 }
 
+/**
+ * How the PDF being signed relates to the files it came from.
+ *
+ * - `converted`: Sealmark made the PDF from these files. The conversion is
+ *   deterministic, so anyone can repeat it and check the hash.
+ * - `declared`: the signer exported the PDF elsewhere (Word, Google Docs) and
+ *   states this file is its original. Recorded, but not something Sealmark can
+ *   prove, and the record says so.
+ */
+export type SourceRelation = 'converted' | 'declared';
+
+export type SourceMethod = 'image-to-pdf' | 'text-to-pdf' | 'exported-by-signer';
+
+export interface SourceFileInput {
+  name: string;
+  mediaType: string;
+  /** The file as the signer supplied it. This is what gets fingerprinted. */
+  bytes: Uint8Array;
+  /**
+   * Set when the file had to be decoded and re-encoded (for example a WebP
+   * decoded by the browser) before conversion. Re-encoding is not guaranteed to
+   * be byte-identical across browsers, so such a conversion cannot be repeated.
+   */
+  reencoded?: boolean;
+}
+
+export interface SourceInput {
+  relation: SourceRelation;
+  method: SourceMethod;
+  /** In page order. For a conversion, the order the files were converted in. */
+  files: SourceFileInput[];
+  /** Page size the conversion used. Recorded so the conversion can be repeated. */
+  pageSize?: PageSize;
+}
+
+export interface SourceFile {
+  name: string;
+  mediaType: string;
+  /** Size in bytes. */
+  size: number;
+  sha256: string;
+  reencoded?: true;
+}
+
+export interface SourceRecord {
+  relation: SourceRelation;
+  method: SourceMethod;
+  files: SourceFile[];
+  pageSize?: PageSize;
+}
+
 export interface SignOptions {
-  /** Raw bytes of the source PDF. */
+  /** Raw bytes of the PDF to sign. */
   document: Uint8Array;
-  /** Original filename, recorded in the audit trail. */
+  /** Filename, recorded in the audit trail. */
   documentName: string;
   signer: Signer;
   fields: FieldSpec[];
   /** TrueType/OpenType bytes used to render signature and initials fields. */
   scriptFont: Uint8Array;
+  /**
+   * TrueType/OpenType bytes for plain text: date and text fields and the
+   * certificate page. Must cover the characters people actually use in names —
+   * PDF's built-in fonts cannot encode "ł", so a Polish signer could not sign.
+   */
+  textFont: Uint8Array;
+  /** The files this PDF was made from, when it did not start life as a PDF. */
+  source?: SourceInput;
   /** Signing instant. Injectable so tests are deterministic. */
   now?: Date;
   /** Append the human-readable signature certificate page. Defaults to true. */
@@ -47,7 +108,13 @@ export interface SignOptions {
 export interface AuditEvent {
   /** ISO-8601 UTC. */
   at: string;
-  type: 'document.received' | 'field.stamped' | 'certificate.appended' | 'document.sealed';
+  type:
+    | 'source.converted'
+    | 'source.declared'
+    | 'document.received'
+    | 'field.stamped'
+    | 'certificate.appended'
+    | 'document.sealed';
   detail: string;
 }
 
@@ -67,6 +134,8 @@ export interface AuditRecord {
   originalHash: string;
   /** SHA-256 of the output PDF — proves it has not changed since. */
   signedHash: string;
+  /** Present when the signed PDF was made from other files. */
+  source?: SourceRecord;
   fields: Array<{ kind: FieldKind; page: number; value: string }>;
   events: AuditEvent[];
   producer: string;

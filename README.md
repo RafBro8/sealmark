@@ -1,14 +1,15 @@
 # Sealmark
 
-Tamper-evident electronic signatures for PDF documents.
+Tamper-evident electronic signatures for PDFs, photos of paper documents, and text files.
 
-Sealmark stamps a signature onto a document and produces a record that proves two
-things: **what was signed**, and **that the signed file has not changed since**.
-Alter one byte of a sealed document — a digit in a price, a word in a clause, a
-scrap of metadata — and verification fails.
+Sealmark stamps a signature onto a document and produces a record that proves
+**what was signed**, **that the signed file has not changed since**, and — when the
+document started life as photos or a text file — **what it was made from**. Alter
+one byte of a sealed document — a digit in a price, a word in a clause, a scrap of
+metadata — and verification fails.
 
-> **Status:** Phase 2 of 5. The signing engine, the command line tool and the
-> browser app are complete and tested. Office document support is next. See
+> **Status:** Phase 3 of 6. Signing, verification, the command line tool, the
+> browser app and in-browser document conversion are complete and tested. See
 > [Roadmap](#roadmap).
 
 ---
@@ -72,6 +73,46 @@ browser-enforced constraint rather than a promise. It is read automatically by
 Cloudflare Pages and Netlify; on another host, serve the same
 `Content-Security-Policy` header.
 
+## Signing things that are not PDFs
+
+| You have | What happens | Where |
+| --- | --- | --- |
+| A PDF | Signed as it is. | In the tab |
+| Photos of a paper document (JPEG, PNG, WebP, and HEIC in Safari) | One page per photo, ordered by filename so `page-2` comes before `page-10`, each turned upright from its EXIF orientation. | In the tab |
+| A plain text file | Laid out on pages with the same font the certificate uses. | In the tab |
+| A Word, Pages, Excel or similar document | You are shown how to save it as a PDF in the app it came from, then sign that PDF. | Your own app |
+
+Office documents are deliberately not converted. Converters that run in a browser
+do not reproduce layout faithfully, and a signed contract has to look exactly like
+the one that was agreed. Word, Google Docs and Pages all export an accurate PDF in
+two clicks.
+
+### What the record says about the source
+
+The record names every source file with its SHA-256, and distinguishes two cases:
+
+- **Converted** — Sealmark made the PDF. Conversion is deterministic, so anyone
+  holding the original photos can convert them again and get byte-for-byte the PDF
+  that was signed. `sealmark verify --source` does exactly that, and the browser and
+  Node produce identical output from the same files.
+- **Declared** — you exported the PDF from Word and told Sealmark which `.docx` it
+  came from. Its fingerprint is recorded so it can be matched later, but the record
+  and the certificate both say this is your declaration, because Sealmark did not
+  perform the export.
+
+A photo in a format the PDF library cannot embed directly, such as WebP, is decoded
+by the browser first. Browsers do not promise byte-identical re-encoding, so the
+record marks that file, and verification will match its fingerprint but declines to
+claim the conversion can be repeated.
+
+### Any language a name comes in
+
+Dates, text fields, converted text and the certificate use Lato, which covers
+Latin, Greek and Cyrillic scripts. PDF's built-in fonts cannot encode characters
+like `ł` at all, so before this a signer named Rafał could not sign. Text a font has
+no glyphs for is refused with the characters listed, rather than silently drawn as
+empty boxes.
+
 ## Command line
 
 ```bash
@@ -113,6 +154,30 @@ origin    fixtures/sample-agreement.pdf is the document that was signed.
 
 Change a single byte of the signed PDF and the same command reports `TAMPERED`
 and exits with code `2`, which makes it usable in a script or a CI check.
+
+### Photos, text, and exported Word documents
+
+```bash
+# Photos of a paper contract, converted and signed in one step
+npx tsx packages/cli/src/index.ts sign scans/page-1.jpg scans/page-2.jpg \
+  --name "Rafał Brodziński" --field "signature:2:60,90,220,26" --page-size a4
+
+# Later: confirm the photos are the originals, and that they convert to exactly the signed PDF
+npx tsx packages/cli/src/index.ts verify scans/page-1.signed.pdf --source scans/page-1.jpg scans/page-2.jpg
+```
+
+```
+source    scans/page-1.jpg matches page-1.jpg, which this PDF was converted from.
+source    scans/page-2.jpg matches page-2.jpg, which this PDF was converted from.
+rebuilt   Converting these files again produces exactly the PDF that was signed.
+```
+
+A PDF you exported from Word can name its original, which is fingerprinted and
+recorded as declared:
+
+```bash
+npx tsx packages/cli/src/index.ts sign contract.pdf --declared-source contract.docx --name "..." --field "..."
+```
 
 ### Inspect a record
 
@@ -180,16 +245,18 @@ authority — never the document, and only when the user enables it.
 
 ### Known cost
 
-The production bundle is around 660 KB gzipped, dominated by pdf.js, pdf-lib and
-fontkit, plus a 457 KB font. Acceptable for an app, heavy for a first visit.
-Code-splitting the signing path and subsetting the font are queued for phase 4.
+The production bundle is around 670 KB gzipped, dominated by pdf.js, pdf-lib and
+fontkit, plus two fonts: 457 KB for signatures and 657 KB for text, the latter
+loaded only when signing or converting. Acceptable for an app, heavy for a first
+visit. Code-splitting the signing path and subsetting the fonts are queued for
+phase 4.
 
 ---
 
 ## Development
 
 ```bash
-npm test           # vitest, 53 tests
+npm test           # vitest, 135 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -204,14 +271,15 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
-3. **Office documents** — `.docx`, `.odt`, `.rtf` converted to PDF via LibreOffice, then signed. Needs a desktop shell, since no browser can do the conversion.
-4. **Evidence hardening** — RFC 3161 trusted timestamps, signed-document archive, offline PWA.
-5. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
+3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
+4. **Evidence hardening** — RFC 3161 trusted timestamps, signed-document archive, offline PWA, smaller bundle.
+5. **Signature styles** — a choice of several signature faces to sign in, each previewed with the signer's own name.
+6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 
 ---
 
 ## Licence
 
-All rights reserved for now. The Great Vibes font in `packages/core/assets` is
-licensed separately under the SIL Open Font License; see the accompanying
-`GreatVibes-OFL.txt`.
+All rights reserved for now. The fonts in `packages/core/assets` are licensed
+separately under the SIL Open Font License: Great Vibes (`GreatVibes-OFL.txt`) and
+Lato (`Lato-OFL.txt`).

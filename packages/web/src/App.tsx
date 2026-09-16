@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AuditRecord, FieldKind, FieldSpec, Placement } from '@sealmark/core';
+import type { AuditRecord, FieldKind, FieldSpec, Placement, SourceFileInput, SourceInput } from '@sealmark/core';
 import { initialsOf, isoDate, signDocument } from '@sealmark/core';
 import { loadDocument, type LoadedDocument } from './lib/pdf.js';
-import { ensureScriptFace, scriptFontBytes } from './lib/font.js';
+import { ensureScriptFace, scriptFontBytes, textFontBytes } from './lib/font.js';
+import { defaultPageSize, prepareFiles } from './lib/prepare.js';
 import { Intake } from './components/Intake.js';
 import { PageView } from './components/PageView.js';
 import { Panel } from './components/Panel.js';
@@ -16,6 +17,18 @@ interface OpenDocument {
   /** The original bytes, kept pristine for signing. */
   bytes: Uint8Array;
   loaded: LoadedDocument;
+  /** Where the PDF came from, when it was not handed over as a PDF. */
+  source?: SourceInput;
+}
+
+/** Short description of a document's origin for the viewer bar. */
+function describeSource(source: SourceInput): string {
+  const [first] = source.files;
+  if (source.relation === 'declared') return `Original: ${first?.name ?? 'declared'}`;
+  if (source.method === 'image-to-pdf') {
+    return source.files.length === 1 ? 'Converted from 1 photo' : `Converted from ${source.files.length} photos`;
+  }
+  return `Converted from ${first?.name ?? 'text'}`;
 }
 
 interface Sealed {
@@ -53,6 +66,8 @@ export function App() {
   const [sealed, setSealed] = useState<Sealed | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [declared, setDeclared] = useState<SourceFileInput | null>(null);
+  const [converting, setConverting] = useState<string | null>(null);
 
   const pagesRef = useRef<HTMLDivElement>(null);
 
@@ -80,26 +95,44 @@ export function App() {
     setZoom(Math.max(MIN_ZOOM, Math.round(fitted * 1000) / 1000));
   }, [doc]);
 
-  const openFile = useCallback(async (file: File) => {
-    setError(null);
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      // Cheap format check so a mis-picked file fails with a clear message
-      // rather than a parser error.
-      const header = new TextDecoder().decode(bytes.subarray(0, 5));
-      if (header !== '%PDF-') {
-        setError(`${file.name} does not look like a PDF.`);
-        return;
-      }
+  const openFiles = useCallback(
+    async (files: File[]) => {
+      setError(null);
+      setConverting('Reading…');
+      try {
+        const prepared = await prepareFiles(files, defaultPageSize(navigator.language), setConverting);
 
-      const loaded = await loadDocument(bytes);
-      setDoc({ name: file.name, bytes, loaded });
-      setFields([]);
-      setSealed(null);
-    } catch (cause) {
-      setError(`Could not open ${file.name}. ${(cause as Error).message}`);
-    }
-  }, []);
+        if (prepared.kind === 'rejected') {
+          setError(prepared.reason);
+          return;
+        }
+        if (prepared.kind === 'office') {
+          setDeclared(prepared.original);
+          return;
+        }
+
+        // A PDF chosen on the Word step is the export of the declared original.
+        let source = prepared.source;
+        if (declared && !source) {
+          source = { relation: 'declared', method: 'exported-by-signer', files: [declared] };
+        } else if (declared && source) {
+          setError('Choose the PDF you exported, not another photo or text file.');
+          return;
+        }
+
+        const loaded = await loadDocument(prepared.bytes);
+        setDoc({ name: prepared.name, bytes: prepared.bytes, loaded, ...(source ? { source } : {}) });
+        setDeclared(null);
+        setFields([]);
+        setSealed(null);
+      } catch (cause) {
+        setError((cause as Error).message);
+      } finally {
+        setConverting(null);
+      }
+    },
+    [declared],
+  );
 
   const place = useCallback(
     (kind: FieldKind, placement: Placement) => {
@@ -154,7 +187,7 @@ export function App() {
     setError(null);
 
     try {
-      const scriptFont = await scriptFontBytes();
+      const [scriptFont, textFont] = await Promise.all([scriptFontBytes(), textFontBytes()]);
       const specs: FieldSpec[] = fields.map((field) => ({
         kind: field.kind,
         placement: field.placement,
@@ -168,6 +201,8 @@ export function App() {
         signer: { name: signer.name.trim(), ...(email ? { email } : {}) },
         fields: specs,
         scriptFont,
+        textFont,
+        ...(doc.source ? { source: doc.source } : {}),
       });
 
       setSealed({ pdf: result.pdf, audit: result.audit });
@@ -184,6 +219,8 @@ export function App() {
     setFields([]);
     setArmed(null);
     setTextValue('');
+    setDeclared(null);
+    setError(null);
   }, []);
 
   const fieldsByPage = useMemo(() => {
@@ -215,7 +252,16 @@ export function App() {
         {sealed ? (
           <Result pdf={sealed.pdf} audit={sealed.audit} onStartOver={startOver} />
         ) : !doc ? (
-          <Intake onFile={(file) => void openFile(file)} error={error} />
+          <Intake
+            onFiles={(files) => void openFiles(files)}
+            declared={declared}
+            onCancelDeclared={() => {
+              setDeclared(null);
+              setError(null);
+            }}
+            converting={converting}
+            error={error}
+          />
         ) : (
           <>
             <div className="viewer">
@@ -223,6 +269,9 @@ export function App() {
                 <span className="doc-name" title={doc.name}>
                   {doc.name}
                 </span>
+                {doc.source ? (
+                  <span className={`source-chip is-${doc.source.relation}`}>{describeSource(doc.source)}</span>
+                ) : null}
                 <span className="spacer" />
                 <div className="zoom">
                   <button

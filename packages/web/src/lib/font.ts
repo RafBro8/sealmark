@@ -1,11 +1,33 @@
 // The same file the core stamps with, bundled from the workspace rather than
 // fetched from a font CDN.
 import scriptFontUrl from '../../../core/assets/GreatVibes-Regular.ttf?url';
+import textFontUrl from '../../../core/assets/Lato-Regular.ttf?url';
 
 export const SCRIPT_FAMILY = 'Sealmark Script';
 
 let bytesPromise: Promise<Uint8Array> | undefined;
+let textBytesPromise: Promise<Uint8Array> | undefined;
 let facePromise: Promise<void> | undefined;
+
+function fetchFont(url: string, label: string): Promise<Uint8Array> {
+  return fetch(url)
+    .then((response) => {
+      if (!response.ok) throw new Error(`Could not load the ${label} font (${response.status}).`);
+      return response.arrayBuffer();
+    })
+    .then((buffer) => new Uint8Array(buffer));
+}
+
+/**
+ * Font for dates, text fields, converted text and the certificate page.
+ *
+ * Loaded only when first needed — signing or converting a text file — since
+ * browsing the intake screen does not need it.
+ */
+export function textFontBytes(): Promise<Uint8Array> {
+  textBytesPromise ??= fetchFont(textFontUrl, 'text');
+  return textBytesPromise;
+}
 
 /**
  * Raw font bytes for pdf-lib.

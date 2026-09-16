@@ -2,6 +2,7 @@ import type { PDFDocument, PDFFont } from 'pdf-lib';
 import { rgb } from 'pdf-lib';
 import type { FieldKind, FieldSpec, Signer } from './types.js';
 import { fitText, initialsOf, isoDate } from './text.js';
+import { assertRenderable } from './glyphs.js';
 
 export interface StampedField {
   kind: FieldKind;
@@ -65,6 +66,7 @@ export function stampFields(
 
     const value = resolveValue(field, signer, now);
     const font = field.kind === 'signature' || field.kind === 'initials' ? fonts.script : fonts.plain;
+    assertRenderable(value, font, `The ${field.kind} field on page ${pageIndex + 1}`);
     const fitted = fitText(value, font, width, height);
 
     // drawText positions the baseline. Offset by the descender so the glyph

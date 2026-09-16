@@ -1,11 +1,19 @@
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import type { AuditEvent, AuditRecord, SignOptions, SignResult } from './types.js';
+import type {
+  AuditEvent,
+  AuditRecord,
+  SignOptions,
+  SignResult,
+  SourceInput,
+  SourceRecord,
+} from './types.js';
 import { sha256Hex, sha256Text } from './hash.js';
 import { stampFields } from './stamp.js';
 import { appendCertificate } from './certificate.js';
+import { PRODUCER } from './version.js';
 
-export const PRODUCER = 'Sealmark 0.1.0';
+export { PRODUCER };
 
 /** Conventional name of the record file that accompanies a signed document. */
 export function recordFileNameFor(documentName: string): string {
@@ -19,6 +27,34 @@ export function recordFileNameFor(documentName: string): string {
 async function deriveRecordId(originalHash: string, signedAt: string, signer: string): Promise<string> {
   const digest = await sha256Text(`${originalHash}|${signedAt}|${signer}`);
   return `SM-${digest.slice(0, 12).toUpperCase()}`;
+}
+
+/** Human-readable byte size for audit trail entries. */
+export function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function fingerprintSource(source: SourceInput): Promise<SourceRecord> {
+  if (source.files.length === 0) {
+    throw new Error('A source must list at least one file.');
+  }
+  const files = await Promise.all(
+    source.files.map(async (file) => ({
+      name: file.name,
+      mediaType: file.mediaType,
+      size: file.bytes.byteLength,
+      sha256: await sha256Hex(file.bytes),
+      ...(file.reencoded ? { reencoded: true as const } : {}),
+    })),
+  );
+  return {
+    relation: source.relation,
+    method: source.method,
+    files,
+    ...(source.pageSize ? { pageSize: source.pageSize } : {}),
+  };
 }
 
 /**
@@ -35,6 +71,8 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
     signer,
     fields,
     scriptFont,
+    textFont,
+    source: sourceInput,
     now = new Date(),
     appendCertificate: withCertificate = true,
   } = options;
@@ -49,21 +87,35 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
   const signedAt = now.toISOString();
   const originalHash = await sha256Hex(document);
   const recordId = await deriveRecordId(originalHash, signedAt, signer.name);
+  const source = sourceInput ? await fingerprintSource(sourceInput) : undefined;
 
-  const events: AuditEvent[] = [
-    {
-      at: signedAt,
-      type: 'document.received',
-      detail: `${documentName} received, SHA-256 ${originalHash.slice(0, 16)}…`,
-    },
-  ];
+  const events: AuditEvent[] = [];
+
+  if (source) {
+    for (const file of source.files) {
+      events.push({
+        at: signedAt,
+        type: source.relation === 'converted' ? 'source.converted' : 'source.declared',
+        detail:
+          source.relation === 'converted'
+            ? `${file.name} (${formatBytes(file.size)}) converted to PDF, SHA-256 ${file.sha256.slice(0, 16)}…`
+            : `${file.name} (${formatBytes(file.size)}) declared by the signer as the original, SHA-256 ${file.sha256.slice(0, 16)}…`,
+      });
+    }
+  }
+
+  events.push({
+    at: signedAt,
+    type: 'document.received',
+    detail: `${documentName} received, SHA-256 ${originalHash.slice(0, 16)}…`,
+  });
 
   const pdf = await PDFDocument.load(document);
   pdf.registerFontkit(fontkit);
 
   const fonts = {
     script: await pdf.embedFont(scriptFont, { subset: true }),
-    plain: await pdf.embedFont(StandardFonts.Helvetica),
+    plain: await pdf.embedFont(textFont, { subset: true }),
   };
 
   const stamped = stampFields(pdf, fields, signer, fonts, now);
@@ -76,7 +128,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
   }
 
   if (withCertificate) {
-    await appendCertificate(pdf, {
+    await appendCertificate(pdf, fonts.plain, {
       recordId,
       documentName,
       signer,
@@ -85,11 +137,12 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
       fields: stamped,
       events: [...events],
       recordFileName: recordFileNameFor(documentName),
+      ...(source ? { source } : {}),
     });
     events.push({
       at: signedAt,
       type: 'certificate.appended',
-      detail: 'Signature certificate added as the final page.',
+      detail: 'Signature certificate added after the document pages.',
     });
   }
 
@@ -115,6 +168,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
     signedAt,
     originalHash,
     signedHash,
+    ...(source ? { source } : {}),
     fields: stamped,
     events,
     producer: PRODUCER,

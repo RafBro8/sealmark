@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { PDFDocument } from 'pdf-lib';
 import { signDocument, recordFileNameFor } from './sign.js';
-import { verifyDocument, verifyOriginal, parseAuditRecord } from './verify.js';
+import { verifyDocument, verifyOriginal, matchSourceFile, parseAuditRecord } from './verify.js';
 import { sha256Hex } from './hash.js';
-import type { FieldSpec } from './types.js';
+import type { FieldSpec, SignOptions } from './types.js';
 
 const FIXTURE = fileURLToPath(new URL('../../../fixtures/sample-agreement.pdf', import.meta.url));
 const FONT = fileURLToPath(new URL('../assets/GreatVibes-Regular.ttf', import.meta.url));
+const TEXT_FONT = fileURLToPath(new URL('../assets/Lato-Regular.ttf', import.meta.url));
 
 const NOW = new Date('2026-09-15T12:00:00.000Z');
 const SIGNER = { name: 'Rafal Brodzinski', email: 'rafbrodi@gmail.com' };
@@ -19,22 +20,25 @@ const FIELDS: FieldSpec[] = [
 
 let document: Uint8Array;
 let scriptFont: Uint8Array;
+let textFont: Uint8Array;
 
 beforeAll(async () => {
   document = new Uint8Array(await readFile(FIXTURE));
   scriptFont = new Uint8Array(await readFile(FONT));
+  textFont = new Uint8Array(await readFile(TEXT_FONT));
 });
 
-const sign = (overrides: Partial<Parameters<typeof signDocument>[0]> = {}) =>
+const sign = (overrides: Partial<SignOptions> = {}) =>
   signDocument({
     document,
     documentName: 'sample-agreement.pdf',
     signer: SIGNER,
     fields: FIELDS,
     scriptFont,
+    textFont,
     now: NOW,
     ...overrides,
-  });
+  } as SignOptions);
 
 describe('signDocument', () => {
   it('records the hash of the document that went in', async () => {
@@ -148,6 +152,111 @@ describe('parseAuditRecord', () => {
     ['a non-hex hash', 'SHA-256', { version: 1, originalHash: 'nope', signedHash: 'nope' }],
   ])('rejects %s', (_label, message, input) => {
     expect(() => parseAuditRecord(input)).toThrow(new RegExp(message, 'i'));
+  });
+});
+
+describe('non-Latin names and text', () => {
+  it('signs for a name PDF standard fonts cannot encode', async () => {
+    // Regression: Helvetica is WinAnsi-only, so "ł" used to abort signing entirely.
+    const { audit } = await sign({ signer: { name: 'Rafał Brodziński' } });
+    expect(audit.fields[0]?.value).toBe('Rafał Brodziński');
+  });
+
+  it('accepts accented text in a text field', async () => {
+    const fields: FieldSpec[] = [
+      { kind: 'text', value: 'Zażółć gęślą jaźń — Straße, Émilie', placement: { page: 0, x: 60, y: 60, width: 300, height: 20 } },
+    ];
+    await expect(sign({ fields })).resolves.toBeDefined();
+  });
+
+  it('refuses text the fonts have no glyphs for, rather than drawing empty boxes', async () => {
+    const fields: FieldSpec[] = [
+      { kind: 'text', value: '合同 signed', placement: { page: 0, x: 60, y: 60, width: 300, height: 20 } },
+    ];
+    await expect(sign({ fields })).rejects.toThrow(/cannot be rendered: 合 同/);
+  });
+});
+
+describe('certificate pagination', () => {
+  it('continues onto another page instead of running off the bottom', async () => {
+    const many: FieldSpec[] = Array.from({ length: 40 }, (_, index) => ({
+      kind: 'text' as const,
+      value: `Clause ${index + 1} initialled`,
+      placement: { page: 0, x: 20, y: 20 + index, width: 120, height: 10 },
+    }));
+    const { pdf } = await sign({ fields: many });
+    const pages = (await PDFDocument.load(pdf)).getPageCount();
+    // One document page, plus a certificate that needs more than one page.
+    expect(pages).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('source files', () => {
+  const photo = { name: 'contract-page-1.jpg', mediaType: 'image/jpeg', bytes: new Uint8Array([1, 2, 3, 4]) };
+  const photo2 = { name: 'contract-page-2.jpg', mediaType: 'image/jpeg', bytes: new Uint8Array([5, 6, 7]) };
+
+  it('fingerprints every source file into the record', async () => {
+    const { audit } = await sign({
+      source: { relation: 'converted', method: 'image-to-pdf', files: [photo, photo2] },
+    });
+    expect(audit.source).toEqual({
+      relation: 'converted',
+      method: 'image-to-pdf',
+      files: [
+        { name: photo.name, mediaType: 'image/jpeg', size: 4, sha256: await sha256Hex(photo.bytes) },
+        { name: photo2.name, mediaType: 'image/jpeg', size: 3, sha256: await sha256Hex(photo2.bytes) },
+      ],
+    });
+  });
+
+  it('logs each source ahead of the document in the audit trail', async () => {
+    const { audit } = await sign({
+      source: { relation: 'converted', method: 'image-to-pdf', files: [photo, photo2] },
+    });
+    expect(audit.events.slice(0, 3).map((event) => event.type)).toEqual([
+      'source.converted',
+      'source.converted',
+      'document.received',
+    ]);
+  });
+
+  it('records a declared source distinctly from a converted one', async () => {
+    const original = { name: 'contract.docx', mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', bytes: new Uint8Array([9, 9]) };
+    const { audit } = await sign({
+      source: { relation: 'declared', method: 'exported-by-signer', files: [original] },
+    });
+    expect(audit.source?.relation).toBe('declared');
+    expect(audit.events[0]?.type).toBe('source.declared');
+    expect(audit.events[0]?.detail).toMatch(/declared by the signer/);
+  });
+
+  it('matches a source file by content, not by name', async () => {
+    const { audit } = await sign({
+      source: { relation: 'converted', method: 'image-to-pdf', files: [photo] },
+    });
+    expect((await matchSourceFile(new Uint8Array([1, 2, 3, 4]), audit))?.name).toBe(photo.name);
+    expect(await matchSourceFile(new Uint8Array([1, 2, 3, 5]), audit)).toBeNull();
+  });
+
+  it('survives a round trip through JSON and validation', async () => {
+    const { audit } = await sign({
+      source: { relation: 'converted', method: 'image-to-pdf', files: [photo] },
+    });
+    expect(parseAuditRecord(JSON.parse(JSON.stringify(audit))).source?.files).toHaveLength(1);
+  });
+
+  it('rejects a record whose source hash is malformed', async () => {
+    const { audit } = await sign({
+      source: { relation: 'converted', method: 'image-to-pdf', files: [photo] },
+    });
+    const broken = JSON.parse(JSON.stringify(audit));
+    broken.source.files[0].sha256 = 'not-a-hash';
+    expect(() => parseAuditRecord(broken)).toThrow(/invalid SHA-256/);
+  });
+
+  it('leaves the record unchanged when there is no source', async () => {
+    const { audit } = await sign();
+    expect('source' in audit).toBe(false);
   });
 });
 

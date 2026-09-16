@@ -3,6 +3,20 @@ import { formatHash, recordFileNameFor } from '@sealmark/core';
 import { downloadBytes, downloadText } from '../lib/download.js';
 import { CheckIcon, DownloadIcon } from './Icons.js';
 
+/** What to keep, and what it lets someone prove later. */
+function sourceAdvice(audit: AuditRecord): string {
+  const source = audit.source!;
+  const plural = source.files.length === 1 ? 'the original file' : 'the original files';
+
+  if (source.relation === 'declared') {
+    return `Keep ${source.files[0]?.name ?? 'the original'} too. Its fingerprint is in the record, so it can be matched later — recorded as your declaration, since the PDF was exported outside Sealmark.`;
+  }
+  if (source.files.some((file) => file.reencoded)) {
+    return `Keep ${plural} too. Their fingerprints are in the record, so they can be matched to this document later.`;
+  }
+  return `Keep ${plural} too. With them, anyone can repeat the conversion and confirm it produces exactly the PDF you signed.`;
+}
+
 interface ResultProps {
   pdf: Uint8Array;
   audit: AuditRecord;
@@ -32,6 +46,17 @@ export function Result({ pdf, audit, onStartOver }: ResultProps) {
             <dt>Record</dt>
             <dd>{audit.recordId}</dd>
           </div>
+          {audit.source
+            ? audit.source.files.map((file) => (
+                <div className="card-row" key={file.sha256 + file.name}>
+                  <dt>{audit.source?.relation === 'converted' ? 'Made from' : 'Declared original'}</dt>
+                  <dd>
+                    {file.name}
+                    <span className="mono source-hash">{formatHash(file.sha256)}</span>
+                  </dd>
+                </div>
+              ))
+            : null}
           <div className="card-row">
             <dt>Signer</dt>
             <dd>
@@ -85,6 +110,8 @@ export function Result({ pdf, audit, onStartOver }: ResultProps) {
           <strong>Keep {recordName} with the PDF.</strong> To check the document later, compare its
           SHA-256 against the sealed hash above. Any change at all produces a different value.
         </p>
+
+        {audit.source ? <p className="keep-note">{sourceAdvice(audit)}</p> : null}
       </div>
     </div>
   );
