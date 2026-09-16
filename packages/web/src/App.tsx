@@ -7,6 +7,7 @@ import { Intake } from './components/Intake.js';
 import { PageView } from './components/PageView.js';
 import { Panel } from './components/Panel.js';
 import { Result } from './components/Result.js';
+import { ThemeToggle } from './components/ThemeToggle.js';
 import { MinusIcon, PlusIcon, SealLogo, ShieldIcon } from './components/Icons.js';
 import type { PlacedField, Signer } from './types.js';
 
@@ -207,6 +208,7 @@ export function App() {
           <ShieldIcon size={13} />
           <span>Nothing leaves this tab</span>
         </div>
+        <ThemeToggle />
       </header>
 
       <div className="main">
