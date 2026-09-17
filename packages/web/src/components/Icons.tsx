@@ -131,3 +131,21 @@ export function MoonIcon({ size = 16 }: IconProps) {
     </svg>
   );
 }
+
+export function AlertIcon({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M8 1.8 15 14H1z" />
+      <path d="M8 6.2v3.6M8 11.9v.1" />
+    </svg>
+  );
+}
+
+export function FileIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M9.2 1.5H4a1.2 1.2 0 0 0-1.2 1.2v10.6A1.2 1.2 0 0 0 4 14.5h8a1.2 1.2 0 0 0 1.2-1.2V5.5z" />
+      <path d="M9.2 1.5v4h4" />
+    </svg>
+  );
+}

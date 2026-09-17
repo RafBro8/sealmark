@@ -10,6 +10,7 @@ import { PageView } from './components/PageView.js';
 import { Panel } from './components/Panel.js';
 import { Result } from './components/Result.js';
 import { ThemeToggle } from './components/ThemeToggle.js';
+import { Verify } from './components/Verify.js';
 import { MinusIcon, PlusIcon, SealLogo, ShieldIcon } from './components/Icons.js';
 import type { PlacedField, Signer } from './types.js';
 
@@ -57,7 +58,10 @@ function stepDown(current: number): number {
   return MIN_ZOOM;
 }
 
+type Mode = 'sign' | 'verify';
+
 export function App() {
+  const [mode, setMode] = useState<Mode>('sign');
   const [doc, setDoc] = useState<OpenDocument | null>(null);
   const [signer, setSigner] = useState<Signer>({ name: '', email: '' });
   const [style, setStyle] = useState<SignatureStyleId>(savedStyle);
@@ -248,6 +252,19 @@ export function App() {
           <SealLogo />
           Sealmark
         </div>
+        <nav className="modes" aria-label="Mode">
+          {(['sign', 'verify'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`mode${mode === value ? ' is-active' : ''}`}
+              aria-pressed={mode === value}
+              onClick={() => setMode(value)}
+            >
+              {value === 'sign' ? 'Sign' : 'Verify'}
+            </button>
+          ))}
+        </nav>
         <div className="header-note">
           <span className="dot" aria-hidden />
           <ShieldIcon size={13} />
@@ -257,7 +274,11 @@ export function App() {
       </header>
 
       <div className="main">
-        {sealed ? (
+        {/* Kept mounted while hidden, so files added for verification survive a trip to Sign. */}
+        <div className="mode-panel" hidden={mode !== 'verify'}>
+          <Verify />
+        </div>
+        {mode === 'verify' ? null : sealed ? (
           <Result pdf={sealed.pdf} audit={sealed.audit} onStartOver={startOver} />
         ) : !doc ? (
           <Intake

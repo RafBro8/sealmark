@@ -8,8 +8,9 @@ document started life as photos or a text file — **what it was made from**. Al
 one byte of a sealed document — a digit in a price, a word in a clause, a scrap of
 metadata — and verification fails.
 
-> **Status:** Signing, verification, the command line tool, the browser app,
-> in-browser document conversion and signature styles are complete and tested.
+> **Status:** Signing, verification in the browser and on the command line, the
+> browser app, in-browser document conversion and signature styles are complete
+> and tested.
 > Evidence hardening and remote signing remain. See [Roadmap](#roadmap).
 
 ---
@@ -72,6 +73,29 @@ In production the `connect-src 'self'` rule in
 browser-enforced constraint rather than a promise. It is read automatically by
 Cloudflare Pages and Netlify; on another host, serve the same
 `Content-Security-Policy` header.
+
+## Verifying a signed document
+
+Switch the header to **Verify** and drop in the signed PDF with its
+`.sealmark.json` record. Add the unsigned original, or the photos, text or Word file
+the document came from, and those are checked too — in the tab, like signing.
+
+| Result | Meaning |
+| --- | --- |
+| Verified | The PDF is byte-for-byte the document the record describes. |
+| Changed since signing | The PDF's certificate names this record, but its contents no longer match. |
+| These files do not belong together | The PDF's certificate names a different record than the one supplied. |
+| Does not match | The contents differ and the PDF has no certificate to say why. |
+
+Telling "changed" from "wrong record" relies on the record id printed on the
+certificate page, read back out of the PDF. With the source photos or text, the
+page also repeats the conversion and reports whether it reproduces the signed PDF
+exactly.
+
+The screen states its own limit plainly: a matching record proves the PDF has not
+changed relative to that record, not that the record is genuine. Someone who edits
+a PDF could write a fresh record for it. Trusted timestamps (phase 4) are what
+close that gap.
 
 ## Signing things that are not PDFs
 
@@ -284,7 +308,7 @@ phase 4.
 ## Development
 
 ```bash
-npm test           # vitest, 166 tests
+npm test           # vitest, 181 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```

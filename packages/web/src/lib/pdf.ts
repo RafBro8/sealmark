@@ -63,3 +63,28 @@ export async function renderPage(
 
   await page.render({ canvasContext: context, viewport }).promise;
 }
+
+/**
+ * Text of a PDF's last few pages, where Sealmark's certificate lives.
+ *
+ * Reads from the end because the certificate is appended after the document,
+ * and may continue across more than one page. Returns an empty string for a
+ * file pdf.js cannot open, so verification can still report on the bytes.
+ */
+export async function trailingPagesText(bytes: Uint8Array, pages = 4): Promise<string> {
+  try {
+    const proxy = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
+    const first = Math.max(1, proxy.numPages - pages + 1);
+    const parts: string[] = [];
+    for (let n = first; n <= proxy.numPages; n += 1) {
+      const content = await (await proxy.getPage(n)).getTextContent();
+      for (const item of content.items) {
+        if ('str' in item) parts.push(item.str);
+      }
+    }
+    await proxy.destroy();
+    return parts.join(' ');
+  } catch {
+    return '';
+  }
+}
