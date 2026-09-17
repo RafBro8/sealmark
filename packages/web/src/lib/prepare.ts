@@ -1,14 +1,5 @@
-import {
-  imagesToPdf,
-  mediaTypeFor,
-  planIntake,
-  sniffImageType,
-  textToPdf,
-  extensionOf,
-  type PageSize,
-  type SourceFileInput,
-  type SourceInput,
-} from '@sealmark/core';
+import { extensionOf, mediaTypeFor, planIntake, sniffImageType } from '@sealmark/core/light';
+import type { PageSize, SourceFileInput, SourceInput } from '@sealmark/core';
 import { textFontBytes } from './font.js';
 
 /**
@@ -134,7 +125,7 @@ export async function prepareFiles(
       return {
         kind: 'ready',
         name: pdfNameFor(first.name),
-        bytes: await imagesToPdf(pages, { pageSize }),
+        bytes: await (await import('@sealmark/core/convert')).imagesToPdf(pages, { pageSize }),
         source: { relation: 'converted', method: 'image-to-pdf', pageSize, files: sources },
       };
     }
@@ -153,7 +144,7 @@ export async function prepareFiles(
         return {
           kind: 'ready',
           name: pdfNameFor(plan.file.name),
-          bytes: await textToPdf(text, await textFontBytes(), { pageSize }),
+          bytes: await (await import('@sealmark/core/convert')).textToPdf(text, await textFontBytes(), { pageSize }),
           source: {
             relation: 'converted',
             method: 'text-to-pdf',

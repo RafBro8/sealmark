@@ -12,14 +12,11 @@ import { sha256Hex, sha256Text } from './hash.js';
 import { stampFields } from './stamp.js';
 import { appendCertificate } from './certificate.js';
 import { PRODUCER } from './version.js';
+import { formatBytes, recordFileNameFor } from './format.js';
 import { signatureStyle } from './styles.js';
 
 export { PRODUCER };
-
-/** Conventional name of the record file that accompanies a signed document. */
-export function recordFileNameFor(documentName: string): string {
-  return `${documentName.replace(/\.pdf$/i, '')}.sealmark.json`;
-}
+export { formatBytes, recordFileNameFor } from './format.js';
 
 /**
  * Short, human-quotable id derived from the document, signer and instant.
@@ -28,13 +25,6 @@ export function recordFileNameFor(documentName: string): string {
 async function deriveRecordId(originalHash: string, signedAt: string, signer: string): Promise<string> {
   const digest = await sha256Text(`${originalHash}|${signedAt}|${signer}`);
   return `SM-${digest.slice(0, 12).toUpperCase()}`;
-}
-
-/** Human-readable byte size for audit trail entries. */
-export function formatBytes(size: number): string {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 async function fingerprintSource(source: SourceInput): Promise<SourceRecord> {

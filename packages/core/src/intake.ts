@@ -1,4 +1,4 @@
-import { naturalCompare, sniffImageType } from './convert.js';
+import { naturalCompare, sniffImageType } from './sniff.js';
 
 /**
  * Decides what to do with files someone hands over. Shared by the browser app

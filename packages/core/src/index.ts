@@ -25,19 +25,20 @@ export { stampFields } from './stamp.js';
 export type { StampedField, StampFonts } from './stamp.js';
 export { appendCertificate } from './certificate.js';
 export type { CertificateData } from './certificate.js';
-export { signDocument, recordFileNameFor, formatBytes } from './sign.js';
+export { signDocument } from './sign.js';
+export { recordFileNameFor, formatBytes, describeDuration } from './format.js';
 export { PRODUCER } from './version.js';
 export { verifyDocument, verifyOriginal, matchSourceFile, reproduceConversion, parseAuditRecord } from './verify.js';
 export type { Reproduction } from './verify.js';
 export {
   imagesToPdf,
   textToPdf,
-  sniffImageType,
-  naturalCompare,
   normaliseText,
   wrapLine,
 } from './convert.js';
-export type { PageSize, ImageToPdfOptions, TextToPdfOptions, ConvertibleImageType } from './convert.js';
+export type { PageSize, ImageToPdfOptions, TextToPdfOptions } from './convert.js';
+export { sniffImageType, naturalCompare } from './sniff.js';
+export type { ConvertibleImageType } from './sniff.js';
 export {
   jpegOrientation,
   orientationMatrix,
@@ -52,8 +53,8 @@ export {
   DEFAULT_SIGNATURE_STYLE,
   signatureStyle,
   isSignatureStyleId,
-  missingGlyphs,
 } from './styles.js';
+export { missingGlyphs } from './coverage.js';
 export type { SignatureStyle, SignatureStyleId } from './styles.js';
 export {
   TIMESTAMP_ENDPOINT,
@@ -65,7 +66,6 @@ export {
   obtainTimestamp,
   attachTimestamp,
   checkRecordTimestamp,
-  describeDuration,
 } from './timestamp.js';
 export type { TimestampCheck, TimestampFailure, RecordTimestampCheck, TimestampRequest } from './timestamp.js';
 export { TIMESTAMP_ROOTS } from './tsa-roots.js';

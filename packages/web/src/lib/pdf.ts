@@ -1,9 +1,20 @@
-import * as pdfjs from 'pdfjs-dist';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 // Bundled from node_modules and served from our own origin — never a CDN.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+let library: Promise<typeof import('pdfjs-dist')> | undefined;
+
+/**
+ * pdf.js, loaded the first time a document is opened rather than with the page:
+ * the intake screen does not need it, and it is the largest piece of the app.
+ */
+function pdfjs(): Promise<typeof import('pdfjs-dist')> {
+  library ??= import('pdfjs-dist').then((lib) => {
+    lib.GlobalWorkerOptions.workerSrc = workerUrl;
+    return lib;
+  });
+  return library;
+}
 
 export type { PDFDocumentProxy, PDFPageProxy };
 
@@ -25,7 +36,7 @@ export interface LoadedDocument {
  * worker, which detaches it and would leave the original unusable for signing.
  */
 export async function loadDocument(bytes: Uint8Array): Promise<LoadedDocument> {
-  const proxy = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
+  const proxy = await (await pdfjs()).getDocument({ data: new Uint8Array(bytes) }).promise;
   const pages: LoadedPage[] = [];
 
   for (let n = 1; n <= proxy.numPages; n += 1) {
@@ -73,7 +84,7 @@ export async function renderPage(
  */
 export async function trailingPagesText(bytes: Uint8Array, pages = 4): Promise<string> {
   try {
-    const proxy = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
+    const proxy = await (await pdfjs()).getDocument({ data: new Uint8Array(bytes) }).promise;
     const first = Math.max(1, proxy.numPages - pages + 1);
     const parts: string[] = [];
     for (let n = first; n <= proxy.numPages; n += 1) {

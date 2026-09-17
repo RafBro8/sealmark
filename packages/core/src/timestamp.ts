@@ -2,6 +2,7 @@ import * as asn1js from 'asn1js';
 import * as pkijs from 'pkijs';
 import type { AuditRecord, TimestampRecord } from './types.js';
 import { TIMESTAMP_ROOTS } from './tsa-roots.js';
+import { TIMESTAMP_ENDPOINT, MAX_CLOCK_DRIFT_MS } from './timestamp-config.js';
 
 /**
  * RFC 3161 trusted timestamps.
@@ -16,15 +17,13 @@ import { TIMESTAMP_ROOTS } from './tsa-roots.js';
  * reply; it makes no network call of its own — the caller passes `fetch` in.
  */
 
-export const TIMESTAMP_ENDPOINT = 'https://rfc3161.ai.moda';
+export { TIMESTAMP_ENDPOINT, MAX_CLOCK_DRIFT_MS };
+export { describeDuration } from './format.js';
 
 const OID_SHA256 = '2.16.840.1.101.3.4.2.1';
 const OID_TST_INFO = '1.2.840.113549.1.9.16.1.4';
 const OID_EXTENDED_KEY_USAGE = '2.5.29.37';
 const OID_KP_TIME_STAMPING = '1.3.6.1.5.5.7.3.8';
-
-/** Allowed gap between the record's claimed signing time and the authority's time. */
-export const MAX_CLOCK_DRIFT_MS = 15 * 60 * 1000;
 
 let engineReady = false;
 function ensureEngine(): void {
@@ -370,16 +369,6 @@ export type RecordTimestampCheck =
       /** True when the record's claimed signing time is far from the authority's. */
       timeDisagrees?: boolean;
     });
-
-/** "3 minutes", "5 hours", "199 days" — a gap between two times, for people. */
-export function describeDuration(ms: number): string {
-  const minutes = Math.round(Math.abs(ms) / 60000);
-  const hours = Math.round(minutes / 60);
-  const days = Math.round(hours / 24);
-  if (days >= 2) return `${days} days`;
-  if (hours >= 2) return `${hours} hours`;
-  return minutes === 1 ? '1 minute' : `${minutes} minutes`;
-}
 
 /** Checks the timestamp stored in a record against that record's signed hash. */
 export async function checkRecordTimestamp(record: AuditRecord): Promise<RecordTimestampCheck> {

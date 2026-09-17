@@ -328,7 +328,8 @@ overflowing into neighbouring content.
 ```
 packages/core/   The signing engine. No filesystem, no network, no Buffer.
                  Hashing is Web Crypto; PDF work is pdf-lib. Runs unchanged in
-                 Node and in the browser.
+                 Node and in the browser. Split into a light entry point and
+                 on-demand ones (see Download size).
 packages/cli/    Filesystem I/O, argument parsing, terminal output.
 packages/web/    React app: pdf.js rendering, click-to-place fields, downloads.
 scripts/         Development aids (fixture generation, PDF text dumping).
@@ -362,28 +363,58 @@ switch is off until the signer turns it on.
 exact headers in `_headers`, so the policy can be tested locally: an upload to any
 other host is blocked by the browser, and the timestamp request goes through.
 
-### Known cost
+### Download size
 
-The production bundle is around 765 KB gzipped, dominated by pdf.js, pdf-lib,
-fontkit and — since trusted timestamps — about 95 KB of ASN.1 and CMS parsing
-(PKI.js), which currently loads even when timestamping is off. Fonts come on top:
-about 790 KB across the five signature styles, loaded when the style picker
-appears, and 657 KB for text, loaded only when signing or converting. Acceptable for
-an app, heavy for a first visit. Loading the signing and timestamp code on demand,
-and subsetting the fonts, are the remaining evidence-hardening work.
+A first visit downloads **65 KB** of gzipped code — the app shell and the intake
+screen. Everything else arrives when it is first needed:
+
+| When | What loads |
+| --- | --- |
+| The page opens | App shell, styles |
+| A document is opened | pdf.js and its worker, pdf-lib, fontkit, the signature style fonts |
+| **Sign and seal** is pressed | Signing code, the text font |
+| A timestamp is requested, or Verify has something to check | PKI.js and the timestamp verifier |
+
+Before this split the first visit was 750 KB, because everything shipped in one
+file. `node scripts/measure-bundle.mjs` reports the current figures after a build.
+
+Two things keep it that way. The core exposes `@sealmark/core/light`, and a test
+walks every import reachable from it and fails if pdf-lib, fontkit, PKI.js or asn1js
+appears. A second test fails if any module the web app loads with the page imports
+signing, conversion, timestamps, verification or pdf.js directly rather than on
+demand.
+
+**Fonts** total 675 KB gzipped, or about 510 KB where the host serves Brotli, as
+Cloudflare Pages and Netlify do. They were considered for trimming one at a time,
+because the SIL Open Font License counts trimming as a modification and forbids a
+modified font from keeping a Reserved Font Name (OFL-FAQ 2.6):
+
+- **Great Vibes** reserves no name, so its hinting instructions — which tune
+  rendering on low-resolution screens and which PDFs ignore — are removed:
+  447 KB to 281 KB. It keeps every character and every outline, and a test compares
+  it glyph by glyph with the untouched source in `packages/core/fonts-source/`.
+  `node scripts/trim-fonts.mjs` regenerates it.
+- **Lato, Parisienne, Sacramento and Meddon** reserve their names and ship exactly
+  as published.
+- **WOFF2** would have been the lawful alternative — conversion without changing
+  font data is not a modification (OFL-FAQ 2.2.1) — and was checked to be lossless,
+  but pdf-lib's font subsetter fails on WOFF2 input, and Brotli already brings TTF
+  within about 60 KB of it.
 
 ---
 
 ## Development
 
 ```bash
-npm test           # vitest, 213 tests
+npm test           # vitest, 221 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
 
 ```bash
 npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
+node scripts/measure-bundle.mjs           # first-visit and on-demand sizes, after a build
+node scripts/trim-fonts.mjs               # regenerate trimmed fonts from fonts-source/
 ```
 
 ---
@@ -393,7 +424,7 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** — RFC 3161 trusted timestamps: *complete*. Still to do: offline PWA, smaller bundle.
+4. **Evidence hardening** — RFC 3161 trusted timestamps and a smaller first visit: *complete*. Still to do: offline PWA.
 5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 
@@ -404,4 +435,6 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 All rights reserved for now. The fonts in `packages/core/assets` are licensed
 separately, each with its licence file alongside: Great Vibes, Parisienne,
 Sacramento, Meddon and Lato under the SIL Open Font License, and Yellowtail under
-the Apache License 2.0.
+the Apache License 2.0. Great Vibes is shipped with its hinting instructions
+removed, which its licence permits as it reserves no font name; the unmodified
+original is in `packages/core/fonts-source/`.

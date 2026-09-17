@@ -3,7 +3,7 @@ import {
   isSignatureStyleId,
   signatureStyle,
   type SignatureStyleId,
-} from '@sealmark/core';
+} from '@sealmark/core/light';
 import { fetchFont } from './font.js';
 // Vite needs each asset as a static import; the core lists which file is which.
 import classicUrl from '../../../core/assets/GreatVibes-Regular.ttf?url';

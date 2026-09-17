@@ -5,9 +5,9 @@ import {
   DEFAULT_SIGNATURE_STYLE,
   SIGNATURE_STYLES,
   isSignatureStyleId,
-  missingGlyphs,
   signatureStyle,
 } from './styles.js';
+import { missingGlyphs } from './coverage.js';
 
 const asset = (file: string) =>
   new Uint8Array(readFileSync(fileURLToPath(new URL(`../assets/${file}`, import.meta.url))));

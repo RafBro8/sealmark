@@ -1,14 +1,13 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent } from 'react';
-import { describeDuration, formatHash, signatureStyle, type AuditRecord } from '@sealmark/core';
+import { describeDuration, formatHash, signatureStyle, type AuditRecord } from '@sealmark/core/light';
 import { trailingPagesText } from '../lib/pdf.js';
 import { textFontBytes } from '../lib/font.js';
 import {
   assignFiles,
   certificateRecordIds,
-  verify,
   type DroppedFile,
   type VerificationReport,
-} from '../lib/verification.js';
+} from '../lib/verify-files.js';
 import { AlertIcon, CheckIcon, CloseIcon, FileIcon, ShieldIcon } from './Icons.js';
 
 type Role = 'Signed PDF' | 'Record' | 'PDF' | 'Supporting file';
@@ -128,6 +127,8 @@ export function Verify() {
     setProblem(null);
     setChecking(true);
     void (async () => {
+      // The checking code, and the libraries it needs, load when there is something to check.
+      const { verify } = await import('../lib/verification.js');
       const certificateIds: Record<string, string[]> = {};
       for (const pdf of assigned.pdfs) {
         certificateIds[pdf.name] = certificateRecordIds(await trailingPagesText(pdf.bytes));

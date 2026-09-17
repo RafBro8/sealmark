@@ -1,5 +1,5 @@
 import type { FieldKind, SignatureStyleId } from '@sealmark/core';
-import { initialsOf } from '@sealmark/core';
+import { initialsOf } from '@sealmark/core/light';
 import { FIELD_LABEL, type PlacedField, type Signer } from '../types.js';
 import { DateIcon, InitialsIcon, ShieldIcon, SignatureIcon, TextIcon } from './Icons.js';
 import { StylePicker } from './StylePicker.js';

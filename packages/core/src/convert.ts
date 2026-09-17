@@ -10,6 +10,10 @@ import fontkit from '@pdf-lib/fontkit';
 import { assertRenderable } from './glyphs.js';
 import { displaySize, jpegOrientation, orientationMatrix, type Orientation } from './orientation.js';
 import { PRODUCER } from './version.js';
+import { sniffImageType } from './sniff.js';
+
+export { sniffImageType, naturalCompare } from './sniff.js';
+export type { ConvertibleImageType } from './sniff.js';
 
 /**
  * Converts photos and plain text into PDFs that can then be signed.
@@ -26,21 +30,6 @@ const PAGE_SIZES: Record<PageSize, [number, number]> = {
   letter: [612, 792],
   a4: [595.28, 841.89],
 };
-
-export type ConvertibleImageType = 'image/jpeg' | 'image/png';
-
-/** Identifies JPEG and PNG by their leading bytes, which unlike a filename cannot lie. */
-export function sniffImageType(bytes: Uint8Array): ConvertibleImageType | null {
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
-  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-  if (png.every((byte, index) => bytes[index] === byte)) return 'image/png';
-  return null;
-}
-
-/** Orders `IMG_2` before `IMG_10`, the way a person numbers pages. */
-export function naturalCompare(a: string, b: string): number {
-  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-}
 
 async function createDeterministicDocument(): Promise<PDFDocument> {
   // updateMetadata:false stops pdf-lib stamping the current time into the file,

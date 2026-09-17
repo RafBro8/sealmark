@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SIGNATURE_STYLES, missingGlyphs, type SignatureStyleId } from '@sealmark/core';
+import { SIGNATURE_STYLES, type SignatureStyleId } from '@sealmark/core/light';
 import { ensureStyleFace, familyFor, styleFontBytes } from '../lib/styles.js';
 import { fitTextSize } from '../lib/font.js';
 
@@ -19,9 +19,16 @@ interface StylePickerProps {
  */
 export function StylePicker({ name, value, onChange }: StylePickerProps) {
   const [loaded, setLoaded] = useState<Partial<Record<SignatureStyleId, Uint8Array>>>({});
+  // The glyph check needs a font parser, so it arrives with the fonts rather than the page.
+  const [missingGlyphs, setMissingGlyphs] = useState<((font: Uint8Array, text: string) => string[]) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    void import('@sealmark/core/coverage')
+      .then((module) => {
+        if (!cancelled) setMissingGlyphs(() => module.missingGlyphs);
+      })
+      .catch(() => undefined);
     for (const style of SIGNATURE_STYLES) {
       void Promise.all([styleFontBytes(style.id), ensureStyleFace(style.id)])
         .then(([bytes]) => {
@@ -42,7 +49,7 @@ export function StylePicker({ name, value, onChange }: StylePickerProps) {
 
       {SIGNATURE_STYLES.map((style) => {
         const bytes = loaded[style.id];
-        const missing = bytes && name.trim() ? missingGlyphs(bytes, name) : [];
+        const missing = bytes && missingGlyphs && name.trim() ? missingGlyphs(bytes, name) : [];
         const unavailable = missing.length > 0;
         const family = familyFor(style.id);
         const size = bytes ? fitTextSize(sample, family, SAMPLE_WIDTH, SAMPLE_HEIGHT, 32) : 22;

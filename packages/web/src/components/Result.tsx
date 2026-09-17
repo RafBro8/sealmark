@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { AuditRecord } from '@sealmark/core';
-import { formatHash, recordFileNameFor } from '@sealmark/core';
+import { formatHash, recordFileNameFor } from '@sealmark/core/light';
 import { downloadBytes, downloadText } from '../lib/download.js';
 import { AlertIcon, CheckIcon, DownloadIcon } from './Icons.js';
 

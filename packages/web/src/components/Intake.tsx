@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type DragEvent, type ReactNode } from 'react';
 import type { SourceFileInput } from '@sealmark/core';
-import { formatBytes } from '@sealmark/core';
+import { formatBytes } from '@sealmark/core/light';
 import { CheckIcon } from './Icons.js';
 
 const ASSURANCES = [

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuditRecord, FieldKind, FieldSpec, Placement, SignatureStyleId, SourceFileInput, SourceInput } from '@sealmark/core';
-import { attachTimestamp, initialsOf, isoDate, obtainTimestamp, signDocument } from '@sealmark/core';
+import { initialsOf, isoDate } from '@sealmark/core/light';
 import { loadDocument, type LoadedDocument } from './lib/pdf.js';
 import { textFontBytes } from './lib/font.js';
 import { ensureStyleFace, familyFor, saveStyle, savedStyle, styleFontBytes } from './lib/styles.js';
@@ -81,11 +81,13 @@ export function App() {
 
   const pagesRef = useRef<HTMLDivElement>(null);
 
-  // Load the chosen face early so fields on the page do not flash in a
-  // fallback font.
+  // Load the chosen face as soon as there is a document to place it on, so
+  // fields do not flash in a fallback font — but not before: the intake screen
+  // never draws a signature, and the font is the heaviest thing it would fetch.
+  const hasDocument = doc !== null;
   useEffect(() => {
-    void ensureStyleFace(style).catch(() => undefined);
-  }, [style]);
+    if (hasDocument) void ensureStyleFace(style).catch(() => undefined);
+  }, [style, hasDocument]);
 
   const chooseStyle = useCallback((id: SignatureStyleId) => {
     setStyle(id);
@@ -202,7 +204,12 @@ export function App() {
     setError(null);
 
     try {
-      const [scriptFont, textFont] = await Promise.all([styleFontBytes(style), textFontBytes()]);
+      // Signing code loads now, on first use, rather than with the page.
+      const [{ signDocument }, scriptFont, textFont] = await Promise.all([
+        import('@sealmark/core/sign'),
+        styleFontBytes(style),
+        textFontBytes(),
+      ]);
       const specs: FieldSpec[] = fields.map((field) => ({
         kind: field.kind,
         placement: field.placement,
@@ -227,6 +234,7 @@ export function App() {
       let timestampError: string | undefined;
       if (timestampOn) {
         try {
+          const { attachTimestamp, obtainTimestamp } = await import('@sealmark/core/timestamp');
           audit = attachTimestamp(audit, await obtainTimestamp(audit.signedHash, { fetch: window.fetch.bind(window) }));
         } catch (cause) {
           timestampError = (cause as Error).message;
@@ -250,6 +258,7 @@ export function App() {
   const addTimestamp = useCallback(async () => {
     if (!sealed) return;
     try {
+      const { attachTimestamp, obtainTimestamp } = await import('@sealmark/core/timestamp');
       const timestamp = await obtainTimestamp(sealed.audit.signedHash, { fetch: window.fetch.bind(window) });
       setSealed({ pdf: sealed.pdf, audit: attachTimestamp(sealed.audit, timestamp) });
     } catch (cause) {

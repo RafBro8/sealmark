@@ -28,6 +28,22 @@ export default defineConfig({
   build: {
     target: 'es2022',
     assetsInlineLimit: 0,
+    // Read by scripts/measure-bundle.mjs to tell first-visit code from the rest.
+    manifest: true,
+    // pdf.js's worker and fontkit are large, but both now load only on demand,
+    // so the default 500 KB warning no longer points at a first-visit cost.
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        // Readable names for the shared libraries, instead of whichever of our
+        // modules happened to import them first.
+        manualChunks: {
+          'pdf-lib': ['pdf-lib'],
+          fontkit: ['@pdf-lib/fontkit'],
+          pkijs: ['pkijs', 'asn1js'],
+        },
+      },
+    },
   },
   server: {
     port: 5175,
