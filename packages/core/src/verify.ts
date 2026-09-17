@@ -1,4 +1,4 @@
-import type { AuditRecord, SourceFile, SourceRecord, VerifyResult } from './types.js';
+import type { AuditRecord, SourceFile, SourceRecord, TimestampRecord, VerifyResult } from './types.js';
 import { sha256Hex } from './hash.js';
 import { imagesToPdf, textToPdf } from './convert.js';
 import { isSignatureStyleId } from './styles.js';
@@ -37,6 +37,12 @@ export function parseAuditRecord(input: unknown): AuditRecord {
     throw new Error('Audit record is missing "events" or "fields".');
   }
   if (r.source !== undefined) validateSource(r.source);
+  if (r.timestamp !== undefined) {
+    const t = r.timestamp as Partial<TimestampRecord>;
+    if (typeof t !== 'object' || t === null || typeof t.token !== 'string' || typeof t.time !== 'string' || Number.isNaN(Date.parse(t.time))) {
+      throw new Error('Audit record has a malformed timestamp.');
+    }
+  }
   if (r.signatureStyle !== undefined && !isSignatureStyleId(r.signatureStyle)) {
     throw new Error(`Audit record names an unknown signature style: ${String(r.signatureStyle)}.`);
   }

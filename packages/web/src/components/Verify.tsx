@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent } from 'react';
-import { formatHash, signatureStyle, type AuditRecord } from '@sealmark/core';
+import { describeDuration, formatHash, signatureStyle, type AuditRecord } from '@sealmark/core';
 import { trailingPagesText } from '../lib/pdf.js';
 import { textFontBytes } from '../lib/font.js';
 import {
@@ -34,6 +34,53 @@ const VERDICT: Record<VerificationReport['status'], { title: string; tone: 'ok' 
 
 function signedAt(record: AuditRecord): string {
   return record.signedAt.replace('T', ' ').replace(/\.\d+Z$|Z$/, ' UTC');
+}
+
+function TimestampLine({ report }: { report: VerificationReport }) {
+  const check = report.timestamp;
+  if (!check) return null;
+
+  if (!check.present) {
+    return (
+      <li className="is-pending">
+        <FileIcon size={13} />
+        <span>No trusted timestamp. The signing time comes from the signer's own device.</span>
+      </li>
+    );
+  }
+  if (!check.valid) {
+    return (
+      <li className="is-bad">
+        <CloseIcon size={12} />
+        <span>
+          <strong>The record's timestamp is not valid.</strong> {check.detail} Treat this record with suspicion.
+        </span>
+      </li>
+    );
+  }
+
+  const when = check.time.toISOString().replace('T', ' ').replace(/[.][0-9]+Z$|Z$/, ' UTC');
+  const covers = report.status === 'verified' ? 'this exact PDF' : 'the signed PDF this record describes, not the file you added,';
+  return (
+    <>
+      <li className="is-ok">
+        <CheckIcon size={13} />
+        <span>
+          <strong>{check.authority}</strong> confirms {covers} existed at <strong>{when}</strong>.
+        </span>
+      </li>
+      {check.timeDisagrees ? (
+        <li className="is-bad">
+          <AlertIcon size={14} />
+          <span>
+            <strong>The record claims it was signed {describeDuration(check.driftMs ?? 0)}{' '}
+            {(check.driftMs ?? 0) < 0 ? 'earlier' : 'later'}.</strong> Trust the timestamp, not the record's own
+            time.
+          </span>
+        </li>
+      ) : null}
+    </>
+  );
 }
 
 export function Verify() {
@@ -211,6 +258,12 @@ export function Verify() {
               </dl>
             ) : null}
 
+            {report.timestamp ? (
+              <ul className="checks">
+                <TimestampLine report={report} />
+              </ul>
+            ) : null}
+
             {report.supporting.length > 0 || report.missingSources.length > 0 || report.rebuild ? (
               <ul className="checks">
                 {report.supporting.map(({ name, result }) => (
@@ -254,7 +307,10 @@ export function Verify() {
             <p className="verify-limits">
               <strong>What this proves:</strong> the PDF is byte-for-byte the document this record describes. It
               cannot prove the record itself is genuine — someone who changes a PDF could also write a new record
-              for it. Keep your own copy of the record for anything you sign or receive.
+              for it.{' '}
+              {report.timestamp?.present && report.timestamp.valid
+                ? 'The trusted timestamp narrows that: such a record would carry a timestamp from when it was forged, not from the original signing.'
+                : 'A trusted timestamp, added when signing, is what narrows that. Keep your own copy of the record for anything you sign or receive.'}
             </p>
 
             <button type="button" className="btn" onClick={() => setFiles([])}>

@@ -7,3 +7,5 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
+*.der binary
+*.tsr binary

@@ -196,6 +196,16 @@ describe('verify', () => {
     expect(report.rebuild).toEqual({ kind: 'skipped', reason: 'Add all 2 source files to rebuild the PDF from them.' });
   });
 
+  it('reports that a record carries no trusted timestamp', async () => {
+    const report = await verify({
+      record: recordFile(signedAgreement),
+      pdfs: [file('a.pdf', signedAgreement.pdf)],
+      others: [],
+      certificateIds: {},
+    });
+    expect(report.timestamp).toEqual({ present: false });
+  });
+
   it('flags a supporting file that matches nothing in the record', async () => {
     const report = await verify({
       record: recordFile(signedPhotos),

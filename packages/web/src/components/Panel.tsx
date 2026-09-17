@@ -22,6 +22,8 @@ interface PanelProps {
   onTextValueChange: (value: string) => void;
   fields: PlacedField[];
   onRemove: (id: string) => void;
+  timestamp: boolean;
+  onTimestampChange: (on: boolean) => void;
   onSign: () => void;
   busy: boolean;
   error: string | null;
@@ -38,6 +40,8 @@ export function Panel({
   onTextValueChange,
   fields,
   onRemove,
+  timestamp,
+  onTimestampChange,
   onSign,
   busy,
   error,
@@ -143,18 +147,32 @@ export function Panel({
       </section>
 
       <section className="panel-section">
+        <label className="toggle-row">
+          <input type="checkbox" checked={timestamp} onChange={(event) => onTimestampChange(event.target.checked)} />
+          <span className="switch" aria-hidden />
+          <span className="toggle-text">
+            <strong>Add a trusted timestamp</strong>
+            <small>
+              DigiCert confirms when this exact signed file existed, which a forged record cannot fake. Only its
+              fingerprint is sent. The document stays here.
+            </small>
+          </span>
+        </label>
+
         {error ? <p className="alert">{error}</p> : null}
 
         <button type="button" className="btn btn-primary" disabled={!canSign} onClick={onSign}>
           <ShieldIcon />
-          {busy ? 'Sealing…' : 'Sign and seal'}
+          {busy ? (timestamp ? 'Sealing and timestamping…' : 'Sealing…') : 'Sign and seal'}
         </button>
 
         <p className="hint">
           {named
             ? fields.length === 0
               ? 'Place at least one field to continue.'
-              : 'Signing happens in this tab. Nothing is uploaded.'
+              : timestamp
+                ? 'Your document stays in this tab. Only its fingerprint is sent, for the timestamp.'
+                : 'Signing happens in this tab. Nothing is uploaded.'
             : 'Enter your name to continue.'}
         </p>
       </section>

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuditRecord, FieldKind, FieldSpec, Placement, SignatureStyleId, SourceFileInput, SourceInput } from '@sealmark/core';
-import { initialsOf, isoDate, signDocument } from '@sealmark/core';
+import { attachTimestamp, initialsOf, isoDate, obtainTimestamp, signDocument } from '@sealmark/core';
 import { loadDocument, type LoadedDocument } from './lib/pdf.js';
 import { textFontBytes } from './lib/font.js';
 import { ensureStyleFace, familyFor, saveStyle, savedStyle, styleFontBytes } from './lib/styles.js';
 import { defaultPageSize, prepareFiles } from './lib/prepare.js';
+import { saveTimestampPreference, savedTimestampPreference } from './lib/preferences.js';
 import { Intake } from './components/Intake.js';
 import { PageView } from './components/PageView.js';
 import { Panel } from './components/Panel.js';
@@ -36,6 +37,8 @@ function describeSource(source: SourceInput): string {
 interface Sealed {
   pdf: Uint8Array;
   audit: AuditRecord;
+  /** Why a requested timestamp could not be added, if it could not. */
+  timestampError?: string;
 }
 
 const ZOOM_STEPS = [0.35, 0.5, 0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.6, 2];
@@ -74,6 +77,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [declared, setDeclared] = useState<SourceFileInput | null>(null);
   const [converting, setConverting] = useState<string | null>(null);
+  const [timestampOn, setTimestampOn] = useState(savedTimestampPreference);
 
   const pagesRef = useRef<HTMLDivElement>(null);
 
@@ -217,13 +221,41 @@ export function App() {
         ...(doc.source ? { source: doc.source } : {}),
       });
 
-      setSealed({ pdf: result.pdf, audit: result.audit });
+      // The PDF is final at this point. A timestamp only adds to the record, so a
+      // failure to get one must not undo the signing.
+      let audit = result.audit;
+      let timestampError: string | undefined;
+      if (timestampOn) {
+        try {
+          audit = attachTimestamp(audit, await obtainTimestamp(audit.signedHash, { fetch: window.fetch.bind(window) }));
+        } catch (cause) {
+          timestampError = (cause as Error).message;
+        }
+      }
+
+      setSealed({ pdf: result.pdf, audit, ...(timestampError ? { timestampError } : {}) });
     } catch (cause) {
       setError((cause as Error).message);
     } finally {
       setBusy(false);
     }
-  }, [doc, fields, signer, style]);
+  }, [doc, fields, signer, style, timestampOn]);
+
+  const chooseTimestamp = useCallback((on: boolean) => {
+    setTimestampOn(on);
+    saveTimestampPreference(on);
+  }, []);
+
+  /** Adds a timestamp to a document already signed, e.g. after an earlier failure. */
+  const addTimestamp = useCallback(async () => {
+    if (!sealed) return;
+    try {
+      const timestamp = await obtainTimestamp(sealed.audit.signedHash, { fetch: window.fetch.bind(window) });
+      setSealed({ pdf: sealed.pdf, audit: attachTimestamp(sealed.audit, timestamp) });
+    } catch (cause) {
+      setSealed({ ...sealed, timestampError: (cause as Error).message });
+    }
+  }, [sealed]);
 
   const startOver = useCallback(() => {
     setSealed(null);
@@ -268,7 +300,7 @@ export function App() {
         <div className="header-note">
           <span className="dot" aria-hidden />
           <ShieldIcon size={13} />
-          <span>Nothing leaves this tab</span>
+          <span>Documents never leave this tab</span>
         </div>
         <ThemeToggle />
       </header>
@@ -279,7 +311,13 @@ export function App() {
           <Verify />
         </div>
         {mode === 'verify' ? null : sealed ? (
-          <Result pdf={sealed.pdf} audit={sealed.audit} onStartOver={startOver} />
+          <Result
+            pdf={sealed.pdf}
+            audit={sealed.audit}
+            {...(sealed.timestampError ? { timestampError: sealed.timestampError } : {})}
+            onAddTimestamp={addTimestamp}
+            onStartOver={startOver}
+          />
         ) : !doc ? (
           <Intake
             onFiles={(files) => void openFiles(files)}
@@ -358,6 +396,8 @@ export function App() {
               onTextValueChange={setTextValue}
               fields={fields}
               onRemove={remove}
+              timestamp={timestampOn}
+              onTimestampChange={chooseTimestamp}
               onSign={() => void sign()}
               busy={busy}
               error={error}

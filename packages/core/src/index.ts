@@ -13,6 +13,7 @@ export type {
   SourceMethod,
   SourceRecord,
   SourceRelation,
+  TimestampRecord,
   VerifyResult,
   VerifyStatus,
 } from './types.js';
@@ -54,3 +55,18 @@ export {
   missingGlyphs,
 } from './styles.js';
 export type { SignatureStyle, SignatureStyleId } from './styles.js';
+export {
+  TIMESTAMP_ENDPOINT,
+  MAX_CLOCK_DRIFT_MS,
+  TIMESTAMP_ATTEMPTS,
+  createTimestampRequest,
+  readTimestampResponse,
+  checkTimestampToken,
+  obtainTimestamp,
+  attachTimestamp,
+  checkRecordTimestamp,
+  describeDuration,
+} from './timestamp.js';
+export type { TimestampCheck, TimestampFailure, RecordTimestampCheck, TimestampRequest } from './timestamp.js';
+export { TIMESTAMP_ROOTS } from './tsa-roots.js';
+export type { TrustedRoot } from './tsa-roots.js';

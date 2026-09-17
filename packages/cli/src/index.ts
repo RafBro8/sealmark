@@ -21,7 +21,13 @@ import {
   SIGNATURE_STYLES,
   DEFAULT_SIGNATURE_STYLE,
   signatureStyle,
+  obtainTimestamp,
+  attachTimestamp,
+  checkRecordTimestamp,
+  describeDuration,
+  TIMESTAMP_ENDPOINT,
   type AuditRecord,
+  type RecordTimestampCheck,
   type FieldSpec,
   type PageSize,
   type SourceInput,
@@ -137,6 +143,24 @@ async function prepare(paths: string[], pageSize: PageSize, textFontPath: string
   }
 }
 
+function printTimestamp(check: RecordTimestampCheck): void {
+  if (!check.present) {
+    console.log(`${dim('time')}      No trusted timestamp. The signing time comes from the signer's own device.`);
+    return;
+  }
+  if (!check.valid) {
+    console.log(`${red('time')}      The record's timestamp is not valid: ${check.detail}`);
+    process.exitCode = 2;
+    return;
+  }
+  console.log(`${green('time')}      ${check.authority} confirms the signed PDF existed at ${check.time.toISOString()}.`);
+  if (check.timeDisagrees) {
+    const direction = (check.driftMs ?? 0) < 0 ? 'earlier' : 'later';
+    console.log(`${yellow('time')}      But the record claims it was signed ${describeDuration(check.driftMs ?? 0)} ${direction}. Trust the timestamp, not the record's own time.`);
+    process.exitCode = 2;
+  }
+}
+
 const program = new Command();
 
 program
@@ -169,6 +193,7 @@ program
   .option('--font <path>', 'custom font for signature and initials, instead of a --style')
   .option('--text-font <path>', 'font for dates, text fields, converted text and the certificate', DEFAULT_TEXT_FONT)
   .option('--no-certificate', 'omit the appended signature certificate page')
+  .option('--timestamp', `add a trusted timestamp; sends only the signed PDF's SHA-256 to ${TIMESTAMP_ENDPOINT}`)
   .action(async (inputs: string[], opts) => {
     const specs: string[] = opts.field ?? [];
     if (specs.length === 0) {
@@ -215,9 +240,19 @@ program
       opts.out ?? join(dirname(stemFrom), `${basename(stemFrom, extname(stemFrom))}.signed.pdf`);
     const outRecord = join(dirname(outPdf), recordFileNameFor(basename(outPdf)));
 
+    let audit = result.audit;
+    let timestampError: string | undefined;
+    if (opts.timestamp) {
+      try {
+        audit = attachTimestamp(audit, await obtainTimestamp(audit.signedHash, { fetch: globalThis.fetch }));
+      } catch (error) {
+        timestampError = (error as Error).message;
+      }
+    }
+
     await mkdir(dirname(outPdf), { recursive: true });
     await writeFile(outPdf, result.pdf);
-    await writeFile(outRecord, `${JSON.stringify(result.audit, null, 2)}\n`);
+    await writeFile(outRecord, `${JSON.stringify(audit, null, 2)}\n`);
 
     if (result.audit.source) {
       const { relation, files } = result.audit.source;
@@ -232,6 +267,12 @@ program
     console.log(`${dim('sha256')}  ${formatHash(result.audit.signedHash)}`);
     if (result.audit.signatureStyle) {
       console.log(`${dim('style')}   ${signatureStyle(result.audit.signatureStyle).label}`);
+    }
+    if (audit.timestamp) {
+      console.log(`${green('time')}    ${audit.timestamp.time} ${dim(`by ${audit.timestamp.authority}`)}`);
+    } else if (timestampError) {
+      console.log(`${yellow('time')}    Not timestamped: ${timestampError}`);
+      console.log(dim(`        Add one later with: sealmark timestamp ${outRecord}`));
     }
     console.log();
     console.log(dim('Keep the record file. It is what proves the document has not changed.'));
@@ -310,7 +351,28 @@ program
       }
     }
 
+    console.log();
+    printTimestamp(await checkRecordTimestamp(record));
+
     if (!result.intact) process.exit(2);
+  });
+
+program
+  .command('timestamp')
+  .description(`Add a trusted timestamp to an existing record. Sends only the signed PDF's SHA-256 to ${TIMESTAMP_ENDPOINT}.`)
+  .argument('<record>', 'path to the .sealmark.json record')
+  .action(async (recordPath: string) => {
+    const record = await loadRecord(recordPath);
+    if (record.timestamp) fail(`${recordPath} already has a timestamp from ${record.timestamp.time}.`);
+    let stamped: AuditRecord;
+    try {
+      stamped = attachTimestamp(record, await obtainTimestamp(record.signedHash, { fetch: globalThis.fetch }));
+    } catch (error) {
+      return fail((error as Error).message);
+    }
+    await writeFile(recordPath, `${JSON.stringify(stamped, null, 2)}\n`);
+    console.log(`${green('timestamped')}  ${stamped.timestamp!.time} ${dim(`by ${stamped.timestamp!.authority}`)}`);
+    console.log(dim('Added after signing, so it proves the signed PDF existed by then, not the moment it was signed.'));
   });
 
 program
@@ -324,6 +386,7 @@ program
     console.log(`${bold(record.documentName)}  ${dim(record.recordId)}`);
     console.log(`${dim('signer')}    ${record.signer.name}${email}`);
     if (record.signatureStyle) console.log(`${dim('style')}     ${signatureStyle(record.signatureStyle).label}`);
+    if (record.timestamp) console.log(`${dim('timestamp')} ${record.timestamp.time} ${dim(`by ${record.timestamp.authority}`)}`);
     console.log(`${dim('signed')}    ${record.signedAt}`);
     console.log(`${dim('original')}  ${formatHash(record.originalHash)}`);
     console.log(`${dim('sealed')}    ${formatHash(record.signedHash)}`);

@@ -1,8 +1,10 @@
 # Security headers for static hosts that read this file (Cloudflare Pages, Netlify).
 # The connect-src rule is the load-bearing one: it is what stops the page from
 # sending a document anywhere, enforced by the browser rather than promised.
+# Its one exception is the timestamp relay, which only ever receives a SHA-256
+# fingerprint, and only when the signer turns timestamping on.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://rfc3161.ai.moda; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin

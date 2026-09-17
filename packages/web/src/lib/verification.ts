@@ -1,9 +1,11 @@
 import {
+  checkRecordTimestamp,
   matchSourceFile,
   parseAuditRecord,
   reproduceConversion,
   sha256Hex,
   type AuditRecord,
+  type RecordTimestampCheck,
   type SourceFile,
 } from '@sealmark/core';
 
@@ -71,6 +73,8 @@ export interface VerificationReport {
   /** Source files named in the record that were not supplied. */
   missingSources: SourceFile[];
   rebuild?: Rebuild;
+  /** The record's own timestamp, checked independently of the PDF. */
+  timestamp?: RecordTimestampCheck;
 }
 
 export interface Assignment {
@@ -199,10 +203,13 @@ export async function verify(input: VerifyInput): Promise<VerificationReport> {
     }
   }
 
+  const timestamp = await checkRecordTimestamp(record);
+
   return {
     status,
     message,
     record,
+    timestamp,
     signedPdfName: signed.name,
     expectedHash: record.signedHash,
     actualHash,

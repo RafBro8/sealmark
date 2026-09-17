@@ -120,8 +120,24 @@ export interface AuditEvent {
     | 'document.received'
     | 'field.stamped'
     | 'certificate.appended'
-    | 'document.sealed';
+    | 'document.sealed'
+    | 'document.timestamped';
   detail: string;
+}
+
+/** An RFC 3161 timestamp over the signed PDF's SHA-256. */
+export interface TimestampRecord {
+  /** Common name of the certificate that signed the timestamp. */
+  authority: string;
+  /** When the authority says the signed PDF existed, ISO-8601 UTC. */
+  time: string;
+  serialNumber: string;
+  policy: string;
+  hashAlgorithm: 'SHA-256';
+  /** The DER TimeStampToken, base64. Verifiable on its own with standard tools. */
+  token: string;
+  /** Endpoint the request went to. Trust rests on the token's signature, not on this. */
+  via: string;
 }
 
 /**
@@ -144,6 +160,8 @@ export interface AuditRecord {
   source?: SourceRecord;
   /** The built-in signature style used, when one was. */
   signatureStyle?: SignatureStyleId;
+  /** Independent proof, from a timestamp authority, of when the signed PDF existed. */
+  timestamp?: TimestampRecord;
   fields: Array<{ kind: FieldKind; page: number; value: string }>;
   events: AuditEvent[];
   producer: string;

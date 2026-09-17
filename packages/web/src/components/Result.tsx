@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import type { AuditRecord } from '@sealmark/core';
 import { formatHash, recordFileNameFor } from '@sealmark/core';
 import { downloadBytes, downloadText } from '../lib/download.js';
-import { CheckIcon, DownloadIcon } from './Icons.js';
+import { AlertIcon, CheckIcon, DownloadIcon } from './Icons.js';
 
 /** What to keep, and what it lets someone prove later. */
 function sourceAdvice(audit: AuditRecord): string {
@@ -17,13 +18,22 @@ function sourceAdvice(audit: AuditRecord): string {
   return `Keep ${plural} too. With them, anyone can repeat the conversion and confirm it produces exactly the PDF you signed.`;
 }
 
+/** "2026-09-17 02:53:49 UTC" */
+export function readableUtc(iso: string): string {
+  return iso.replace('T', ' ').replace(/[.][0-9]+Z$|Z$/, ' UTC');
+}
+
 interface ResultProps {
   pdf: Uint8Array;
   audit: AuditRecord;
+  /** Set when a timestamp was requested but could not be added. */
+  timestampError?: string;
+  onAddTimestamp: () => Promise<void>;
   onStartOver: () => void;
 }
 
-export function Result({ pdf, audit, onStartOver }: ResultProps) {
+export function Result({ pdf, audit, timestampError, onAddTimestamp, onStartOver }: ResultProps) {
+  const [retrying, setRetrying] = useState(false);
   const signedName = audit.documentName.replace(/\.pdf$/i, '') + '.signed.pdf';
   const recordName = recordFileNameFor(signedName);
 
@@ -46,6 +56,15 @@ export function Result({ pdf, audit, onStartOver }: ResultProps) {
             <dt>Record</dt>
             <dd>{audit.recordId}</dd>
           </div>
+          {audit.timestamp ? (
+            <div className="card-row is-timestamp">
+              <dt>Trusted timestamp</dt>
+              <dd>
+                {readableUtc(audit.timestamp.time)}
+                <span className="source-hash">{audit.timestamp.authority}</span>
+              </dd>
+            </div>
+          ) : null}
           {audit.source
             ? audit.source.files.map((file) => (
                 <div className="card-row" key={file.sha256 + file.name}>
@@ -81,6 +100,28 @@ export function Result({ pdf, audit, onStartOver }: ResultProps) {
             <dd className="mono">{formatHash(audit.signedHash)}</dd>
           </div>
         </dl>
+
+        {!audit.timestamp && timestampError ? (
+          <div className="timestamp-failed" role="status">
+            <AlertIcon size={16} />
+            <div>
+              <strong>Signed, but not timestamped.</strong> {timestampError} The signed PDF and record are complete
+              without it. A timestamp added later proves the document existed by then, rather than when it was
+              signed, so it is worth trying again now.
+              <button
+                type="button"
+                className="btn"
+                disabled={retrying}
+                onClick={() => {
+                  setRetrying(true);
+                  void onAddTimestamp().finally(() => setRetrying(false));
+                }}
+              >
+                {retrying ? 'Trying…' : 'Try again'}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="downloads">
           <button

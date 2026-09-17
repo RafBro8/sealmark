@@ -8,10 +8,10 @@ document started life as photos or a text file — **what it was made from**. Al
 one byte of a sealed document — a digit in a price, a word in a clause, a scrap of
 metadata — and verification fails.
 
-> **Status:** Signing, verification in the browser and on the command line, the
-> browser app, in-browser document conversion and signature styles are complete
-> and tested.
-> Evidence hardening and remote signing remain. See [Roadmap](#roadmap).
+> **Status:** Signing, verification in the browser and on the command line,
+> in-browser document conversion, signature styles and trusted timestamps are
+> complete and tested. An offline build, a smaller bundle and remote signing
+> remain. See [Roadmap](#roadmap).
 
 ---
 
@@ -43,9 +43,10 @@ signing certificate, and no green tick in Adobe Reader. Those require a purchase
 certificate and solve a different problem — proving *organisational identity*
 rather than *document integrity*.
 
-Not yet implemented: RFC 3161 trusted timestamping, which would replace reliance
-on the signing machine's clock with a third-party attestation of time. It is the
-next meaningful upgrade to the evidence model.
+Optionally, a record also carries an RFC 3161 trusted timestamp from DigiCert,
+which replaces reliance on the signing machine's clock with an independent,
+signed statement of when the signed PDF existed. See
+[Trusted timestamps](#trusted-timestamps).
 
 Nothing here is legal advice. ESIGN carves out wills, certain real-estate
 instruments and some court filings; don't use this for those.
@@ -94,8 +95,69 @@ exactly.
 
 The screen states its own limit plainly: a matching record proves the PDF has not
 changed relative to that record, not that the record is genuine. Someone who edits
-a PDF could write a fresh record for it. Trusted timestamps (phase 4) are what
-close that gap.
+a PDF could write a fresh record for it. A trusted timestamp narrows that gap: a
+forged record carries a timestamp from when it was forged, and a record whose
+claimed signing time disagrees with its timestamp is flagged.
+
+## Trusted timestamps
+
+Turn on **Add a trusted timestamp** before signing, or pass `--timestamp` on the
+command line. Sealmark sends the signed PDF's SHA-256 — only that — to a timestamp
+authority, and stores the signed reply in the record.
+
+```
+time      DigiCert SHA256 RSA4096 Timestamp Responder 2026 1 confirms the signed PDF existed at 2026-09-17T02:53:49.000Z.
+```
+
+**Why it matters.** Without a timestamp, the signing time is whatever the signer's
+computer said. With one, an independent authority has signed a statement that this
+exact file existed at that moment. A forger can edit a PDF and write a new record,
+but cannot get an authority to sign a timestamp for a date in the past. Verification also flags a
+record whose claimed signing time disagrees with its timestamp — exactly what a
+backdated record looks like:
+
+```
+time      But the record claims it was signed 200 days earlier. Trust the timestamp, not the record's own time.
+```
+
+**How it is checked.** A timestamp is accepted only if all of these hold: it is for
+this file's hash; it answers the request that was sent (a random nonce stops an old
+reply being replayed); the certificate that signed it is authorised specifically
+for timestamping; that certificate chains to a pinned root, judged as of the timestamp's own time so
+it keeps verifying after certificates expire; and the signature itself is valid.
+The purpose check matters: the same roots also stand behind ordinary website and
+code-signing certificates, and without it any of those could forge a timestamp. The
+tests include that forgery.
+
+**Pinned roots.** [`packages/core/src/tsa-roots.ts`](packages/core/src/tsa-roots.ts)
+holds DigiCert Trusted Root G4, DigiCert Assured ID Root CA and USERTrust RSA
+Certification Authority (Sectigo), each with a fingerprint matching its authority's
+published value and the Windows trust store. Trust is an explicit, reviewable
+decision in one file rather than whatever a machine happens to trust.
+
+**Why a relay.** A browser may only call a server that allows it, and of eight
+public timestamp authorities tested, none did — except `rfc3161.ai.moda`, a free
+relay that forwards to established authorities. Sampled over 40 requests it used
+DigiCert 38 times and Sectigo twice, so both are pinned. Should it route a request
+to an authority Sealmark does not trust, Sealmark asks again, up to three times,
+and never accepts the untrusted reply. Trust rests on the authority's signature,
+not on the relay, so if the relay ever disappears, replacing it does not invalidate
+a single existing timestamp.
+
+**Not locked in.** The stored token is a standard RFC 3161 response; standard tools
+verify it without Sealmark:
+
+```bash
+# token.der is the record's timestamp.token, base64-decoded;
+# -CAfile is the root of whichever authority signed it (here DigiCert)
+openssl ts -verify -in token.der -token_in -data contract.signed.pdf -CAfile DigiCertTrustedRootG4.pem
+```
+
+**When it cannot be reached** — offline, or the relay is down — signing still
+completes, and the result says so plainly with a **Try again** button. On the
+command line, `sealmark timestamp <record>` adds one later. A timestamp added later
+proves the document existed by then rather than when it was signed, and the output
+says so.
 
 ## Signing things that are not PDFs
 
@@ -292,23 +354,30 @@ The app is a static site that does all work client-side. No upload, enforced by 
 Content-Security-Policy that blocks outbound connections rather than merely
 promising not to make them, and verifiable by anyone with the Network tab open.
 
-Trusted timestamping, when added, will send a SHA-256 hash to a timestamp
-authority — never the document, and only when the user enables it.
+The single exception in the policy is the timestamp relay. It receives a SHA-256
+fingerprint, never the document, and only when timestamping is switched on. The
+switch is off until the signer turns it on.
+
+`npm run preview --workspace @sealmark/web` serves the production build under the
+exact headers in `_headers`, so the policy can be tested locally: an upload to any
+other host is blocked by the browser, and the timestamp request goes through.
 
 ### Known cost
 
-The production bundle is around 670 KB gzipped, dominated by pdf.js, pdf-lib and
-fontkit, plus fonts: about 790 KB across the five signature styles, loaded when the
-style picker appears, and 657 KB for text, loaded only when signing or converting.
-Acceptable for an app, heavy for a first visit. Code-splitting the signing path and subsetting the fonts are queued for
-phase 4.
+The production bundle is around 765 KB gzipped, dominated by pdf.js, pdf-lib,
+fontkit and — since trusted timestamps — about 95 KB of ASN.1 and CMS parsing
+(PKI.js), which currently loads even when timestamping is off. Fonts come on top:
+about 790 KB across the five signature styles, loaded when the style picker
+appears, and 657 KB for text, loaded only when signing or converting. Acceptable for
+an app, heavy for a first visit. Loading the signing and timestamp code on demand,
+and subsetting the fonts, are the remaining evidence-hardening work.
 
 ---
 
 ## Development
 
 ```bash
-npm test           # vitest, 181 tests
+npm test           # vitest, 213 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -324,7 +393,7 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** — RFC 3161 trusted timestamps, signed-document archive, offline PWA, smaller bundle.
+4. **Evidence hardening** — RFC 3161 trusted timestamps: *complete*. Still to do: offline PWA, smaller bundle.
 5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 
