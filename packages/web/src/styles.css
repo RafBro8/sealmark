@@ -906,3 +906,39 @@ button, input { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .switch, .switch::after { transition: none; }
 }
+
+/* ---------------------------------------------------------------- offline -- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 20;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-page);
+  font-size: 13px;
+}
+
+.toast .btn { padding: 6px 12px; }
+
+.offline-note {
+  margin: 0 0 12px;
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .toast { flex-wrap: wrap; bottom: 12px; }
+}

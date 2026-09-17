@@ -29,10 +29,11 @@ interface ResultProps {
   /** Set when a timestamp was requested but could not be added. */
   timestampError?: string;
   onAddTimestamp: () => Promise<void>;
+  online: boolean;
   onStartOver: () => void;
 }
 
-export function Result({ pdf, audit, timestampError, onAddTimestamp, onStartOver }: ResultProps) {
+export function Result({ pdf, audit, timestampError, onAddTimestamp, online, onStartOver }: ResultProps) {
   const [retrying, setRetrying] = useState(false);
   const signedName = audit.documentName.replace(/\.pdf$/i, '') + '.signed.pdf';
   const recordName = recordFileNameFor(signedName);
@@ -111,13 +112,13 @@ export function Result({ pdf, audit, timestampError, onAddTimestamp, onStartOver
               <button
                 type="button"
                 className="btn"
-                disabled={retrying}
+                disabled={retrying || !online}
                 onClick={() => {
                   setRetrying(true);
                   void onAddTimestamp().finally(() => setRetrying(false));
                 }}
               >
-                {retrying ? 'Trying…' : 'Try again'}
+                {retrying ? 'Trying…' : online ? 'Try again' : 'Try again once online'}
               </button>
             </div>
           </div>

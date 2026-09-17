@@ -9,9 +9,9 @@ one byte of a sealed document — a digit in a price, a word in a clause, a scra
 metadata — and verification fails.
 
 > **Status:** Signing, verification in the browser and on the command line,
-> in-browser document conversion, signature styles and trusted timestamps are
-> complete and tested. An offline build, a smaller bundle and remote signing
-> remain. See [Roadmap](#roadmap).
+> in-browser document conversion, signature styles, trusted timestamps, a 65 KB
+> first visit and offline use are complete and tested. Remote signing remains.
+> See [Roadmap](#roadmap).
 
 ---
 
@@ -74,6 +74,37 @@ In production the `connect-src 'self'` rule in
 browser-enforced constraint rather than a promise. It is read automatically by
 Cloudflare Pages and Netlify; on another host, serve the same
 `Content-Security-Policy` header.
+
+## Offline, and installable
+
+After one visit Sealmark works with no connection, and it can be installed from
+the browser — **Install Sealmark** in Chrome and Edge, **Add to Home Screen** on a
+phone — to open in its own window like any other app.
+
+A service worker keeps a copy of every file the app can load, including the code
+and fonts that normally arrive on demand, so opening a document, choosing any
+signature style and signing all work offline. Only trusted timestamps need a
+connection: offline, the header says so, signing still completes, and **Try again**
+adds the timestamp once the connection returns.
+
+Tested the direct way: with the production build loaded, the server was stopped
+entirely. The page reloaded from the service worker, opened a PDF, rendered all five
+signature styles and signed a document, fetching zero bytes from the network.
+
+**Updates never interrupt signing.** When a new version is published, a notice
+offers **Reload** or **Later**; the new version waits until the signer chooses,
+because a reload in the middle of placing fields would lose them. Tested by serving
+a changed build to a page running the saved one: the notice appeared, the page kept
+running the old version, and Reload switched it.
+
+**What this costs.** The page itself still becomes usable after 65 KB. The service
+worker then saves the rest in the background — 28 files, 1.8 MB gzipped or about
+1.5 MB with Brotli — which is what makes offline use possible. `_headers` tells
+hosts to re-check `sw.js`, `index.html` and the manifest on every visit, so a
+published update reaches people instead of sitting behind a long cache.
+
+The app icons are rendered from the seal logo by `node scripts/make-icons.mjs`,
+including a maskable version that keeps the seal inside Android's safe zone.
 
 ## Verifying a signed document
 
@@ -415,6 +446,12 @@ npm run build      # production build of the web app
 npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 node scripts/measure-bundle.mjs           # first-visit and on-demand sizes, after a build
 node scripts/trim-fonts.mjs               # regenerate trimmed fonts from fonts-source/
+node scripts/make-icons.mjs               # regenerate the app icons from seal.svg
+```
+
+```bash
+npm run build --workspace @sealmark/web && npm run preview --workspace @sealmark/web
+# production build on :5176, under the real security headers and with the service worker
 ```
 
 ---
@@ -424,7 +461,7 @@ node scripts/trim-fonts.mjs               # regenerate trimmed fonts from fonts-
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** — RFC 3161 trusted timestamps and a smaller first visit: *complete*. Still to do: offline PWA.
+4. **Evidence hardening** — RFC 3161 trusted timestamps, a 65 KB first visit, offline use and installation. *Complete.*
 5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 

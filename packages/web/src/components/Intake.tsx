@@ -6,7 +6,7 @@ import { CheckIcon } from './Icons.js';
 const ASSURANCES = [
   'Your document never leaves this tab. Photos and text are converted here, with no upload and no server.',
   'Every signed file gets a record proving it has not changed since, and what it was made from.',
-  'Works offline once the page has loaded.',
+  'Works offline, and installs as an app from your browser.',
 ];
 
 const ACCEPT_ANY = [

@@ -12,6 +12,8 @@ import { Panel } from './components/Panel.js';
 import { Result } from './components/Result.js';
 import { ThemeToggle } from './components/ThemeToggle.js';
 import { Verify } from './components/Verify.js';
+import { AppUpdates } from './components/AppUpdates.js';
+import { useOnline } from './lib/online.js';
 import { MinusIcon, PlusIcon, SealLogo, ShieldIcon } from './components/Icons.js';
 import type { PlacedField, Signer } from './types.js';
 
@@ -65,6 +67,7 @@ type Mode = 'sign' | 'verify';
 
 export function App() {
   const [mode, setMode] = useState<Mode>('sign');
+  const online = useOnline();
   const [doc, setDoc] = useState<OpenDocument | null>(null);
   const [signer, setSigner] = useState<Signer>({ name: '', email: '' });
   const [style, setStyle] = useState<SignatureStyleId>(savedStyle);
@@ -309,11 +312,12 @@ export function App() {
         <div className="header-note">
           <span className="dot" aria-hidden />
           <ShieldIcon size={13} />
-          <span>Documents never leave this tab</span>
+          <span>{online ? 'Documents never leave this tab' : 'Offline · documents never leave this tab'}</span>
         </div>
         <ThemeToggle />
       </header>
 
+      <AppUpdates />
       <div className="main">
         {/* Kept mounted while hidden, so files added for verification survive a trip to Sign. */}
         <div className="mode-panel" hidden={mode !== 'verify'}>
@@ -325,6 +329,7 @@ export function App() {
             audit={sealed.audit}
             {...(sealed.timestampError ? { timestampError: sealed.timestampError } : {})}
             onAddTimestamp={addTimestamp}
+            online={online}
             onStartOver={startOver}
           />
         ) : !doc ? (
@@ -406,6 +411,7 @@ export function App() {
               fields={fields}
               onRemove={remove}
               timestamp={timestampOn}
+              online={online}
               onTimestampChange={chooseTimestamp}
               onSign={() => void sign()}
               busy={busy}

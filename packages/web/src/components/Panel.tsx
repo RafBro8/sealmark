@@ -23,6 +23,7 @@ interface PanelProps {
   fields: PlacedField[];
   onRemove: (id: string) => void;
   timestamp: boolean;
+  online: boolean;
   onTimestampChange: (on: boolean) => void;
   onSign: () => void;
   busy: boolean;
@@ -41,6 +42,7 @@ export function Panel({
   fields,
   onRemove,
   timestamp,
+  online,
   onTimestampChange,
   onSign,
   busy,
@@ -158,6 +160,13 @@ export function Panel({
             </small>
           </span>
         </label>
+
+        {timestamp && !online ? (
+          <p className="offline-note">
+            You are offline. The document will still be signed now; add the timestamp from the next screen once
+            you are back online.
+          </p>
+        ) : null}
 
         {error ? <p className="alert">{error}</p> : null}
 
