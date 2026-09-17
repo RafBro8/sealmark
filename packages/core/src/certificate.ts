@@ -24,6 +24,8 @@ export interface CertificateData {
   events: AuditEvent[];
   recordFileName: string;
   source?: SourceRecord;
+  /** Human label of the signature style, e.g. "Classic". */
+  signatureStyle?: string;
 }
 
 interface CertFonts {
@@ -201,6 +203,7 @@ export async function appendCertificate(
   layout.heading('Signer');
   layout.row('Name', data.signer.name);
   if (data.signer.email) layout.row('Email', data.signer.email);
+  if (data.signatureStyle) layout.row('Signature style', data.signatureStyle);
   layout.row('Signed at (UTC)', data.signedAt);
 
   layout.heading(`Fields applied (${data.fields.length})`);

@@ -3,7 +3,7 @@ import type { Placement } from '@sealmark/core';
 import type { PlacedField } from '../types.js';
 import { FIELD_LABEL } from '../types.js';
 import { clampToPage, toPdf, toScreen, tidy, type PageGeometry, type ScreenBox } from '../lib/coords.js';
-import { fitTextSize, SCRIPT_FAMILY } from '../lib/font.js';
+import { fitTextSize } from '../lib/font.js';
 import { CloseIcon } from './Icons.js';
 
 /** Smallest usable box, in PDF points. */
@@ -15,6 +15,8 @@ interface FieldBoxProps {
   geometry: PageGeometry;
   /** What the field will actually stamp, shown as a live preview. */
   displayText: string;
+  /** CSS font family for signature and initials fields. */
+  scriptFamily: string;
   onChange: (id: string, placement: Placement) => void;
   onRemove: (id: string) => void;
 }
@@ -26,7 +28,7 @@ interface DragState {
   origin: ScreenBox;
 }
 
-export function FieldBox({ field, geometry, displayText, onChange, onRemove }: FieldBoxProps) {
+export function FieldBox({ field, geometry, displayText, scriptFamily, onChange, onRemove }: FieldBoxProps) {
   const drag = useRef<DragState | null>(null);
   const box = toScreen(field.placement, geometry);
   const isScript = field.kind === 'signature' || field.kind === 'initials';
@@ -94,7 +96,7 @@ export function FieldBox({ field, geometry, displayText, onChange, onRemove }: F
 
   const fontSize = fitTextSize(
     displayText,
-    isScript ? SCRIPT_FAMILY : 'system-ui',
+    isScript ? scriptFamily : 'system-ui',
     Math.max(box.width - 4, 1),
     box.height,
   );
@@ -126,7 +128,10 @@ export function FieldBox({ field, geometry, displayText, onChange, onRemove }: F
 
       <span
         className={`field-text ${isScript ? 'is-script' : 'is-plain'}`}
-        style={{ fontSize: `${fontSize}px` }}
+        style={{
+          fontSize: `${fontSize}px`,
+          ...(isScript ? { fontFamily: `"${scriptFamily}", cursive` } : {}),
+        }}
       >
         {displayText}
       </span>

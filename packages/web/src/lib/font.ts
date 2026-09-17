@@ -1,15 +1,10 @@
-// The same file the core stamps with, bundled from the workspace rather than
-// fetched from a font CDN.
-import scriptFontUrl from '../../../core/assets/GreatVibes-Regular.ttf?url';
+// Bundled from the workspace rather than fetched from a font CDN. Signature
+// faces live in styles.ts.
 import textFontUrl from '../../../core/assets/Lato-Regular.ttf?url';
 
-export const SCRIPT_FAMILY = 'Sealmark Script';
-
-let bytesPromise: Promise<Uint8Array> | undefined;
 let textBytesPromise: Promise<Uint8Array> | undefined;
-let facePromise: Promise<void> | undefined;
 
-function fetchFont(url: string, label: string): Promise<Uint8Array> {
+export function fetchFont(url: string, label: string): Promise<Uint8Array> {
   return fetch(url)
     .then((response) => {
       if (!response.ok) throw new Error(`Could not load the ${label} font (${response.status}).`);
@@ -27,34 +22,6 @@ function fetchFont(url: string, label: string): Promise<Uint8Array> {
 export function textFontBytes(): Promise<Uint8Array> {
   textBytesPromise ??= fetchFont(textFontUrl, 'text');
   return textBytesPromise;
-}
-
-/**
- * Raw font bytes for pdf-lib.
- *
- * Cached: the file is around 450KB and signing may happen repeatedly.
- */
-export function scriptFontBytes(): Promise<Uint8Array> {
-  bytesPromise ??= fetch(scriptFontUrl)
-    .then((response) => {
-      if (!response.ok) throw new Error(`Could not load the signature font (${response.status}).`);
-      return response.arrayBuffer();
-    })
-    .then((buffer) => new Uint8Array(buffer));
-  return bytesPromise;
-}
-
-/**
- * Registers the same face for on-screen rendering, so the preview a user places
- * matches the glyphs that end up in the PDF.
- */
-export function ensureScriptFace(): Promise<void> {
-  facePromise ??= (async () => {
-    const face = new FontFace(SCRIPT_FAMILY, `url(${scriptFontUrl})`);
-    await face.load();
-    document.fonts.add(face);
-  })();
-  return facePromise;
 }
 
 let measurer: CanvasRenderingContext2D | undefined;

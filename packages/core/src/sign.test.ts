@@ -260,6 +260,28 @@ describe('source files', () => {
   });
 });
 
+describe('signature style', () => {
+  it('records the style in the audit record', async () => {
+    const { audit } = await sign({ signatureStyle: 'quill' });
+    expect(audit.signatureStyle).toBe('quill');
+  });
+
+  it('leaves it out when a custom font is used', async () => {
+    const { audit } = await sign();
+    expect('signatureStyle' in audit).toBe(false);
+  });
+
+  it('rejects an unknown style before doing any work', async () => {
+    await expect(sign({ signatureStyle: 'comic' as never })).rejects.toThrow(/Unknown signature style "comic"/);
+  });
+
+  it('refuses a record naming a style that does not exist', async () => {
+    const { audit } = await sign({ signatureStyle: 'bold' });
+    const doctored = { ...JSON.parse(JSON.stringify(audit)), signatureStyle: 'wingdings' };
+    expect(() => parseAuditRecord(doctored)).toThrow(/unknown signature style/);
+  });
+});
+
 describe('recordFileNameFor', () => {
   it('swaps the pdf extension', () => {
     expect(recordFileNameFor('contract.pdf')).toBe('contract.sealmark.json');

@@ -18,6 +18,9 @@ import {
   sniffImageType,
   planIntake,
   mediaTypeFor,
+  SIGNATURE_STYLES,
+  DEFAULT_SIGNATURE_STYLE,
+  signatureStyle,
   type AuditRecord,
   type FieldSpec,
   type PageSize,
@@ -27,7 +30,6 @@ import { parseField, FIELD_SYNTAX } from './fields.js';
 import { dim, bold, green, red, yellow } from './term.js';
 
 const asset = (name: string) => fileURLToPath(new URL(`../../core/assets/${name}`, import.meta.url));
-const DEFAULT_SCRIPT_FONT = asset('GreatVibes-Regular.ttf');
 const DEFAULT_TEXT_FONT = asset('Lato-Regular.ttf');
 
 function fail(message: string): never {
@@ -159,7 +161,12 @@ program
     '--declared-source <path>',
     'the original a PDF was exported from (e.g. a .docx); its fingerprint is recorded as declared by the signer',
   )
-  .option('--font <path>', 'font for signature and initials', DEFAULT_SCRIPT_FONT)
+  .addOption(
+    new Option('--style <style>', `signature style: ${SIGNATURE_STYLES.map((s) => `${s.id} (${s.description.toLowerCase()})`).join(', ')}`)
+      .choices(SIGNATURE_STYLES.map((s) => s.id))
+      .default(DEFAULT_SIGNATURE_STYLE),
+  )
+  .option('--font <path>', 'custom font for signature and initials, instead of a --style')
   .option('--text-font <path>', 'font for dates, text fields, converted text and the certificate', DEFAULT_TEXT_FONT)
   .option('--no-certificate', 'omit the appended signature certificate page')
   .action(async (inputs: string[], opts) => {
@@ -186,7 +193,7 @@ program
     }
 
     const [scriptFont, textFont] = await Promise.all([
-      read(opts.font, 'font'),
+      read(opts.font ?? asset(signatureStyle(opts.style).file), 'font'),
       read(opts.textFont, 'text font'),
     ]);
 
@@ -196,6 +203,8 @@ program
       signer: { name: opts.name, ...(opts.email ? { email: opts.email } : {}) },
       fields,
       scriptFont,
+      // A custom font is not one of the styles, so the record does not claim one.
+      ...(opts.font ? {} : { signatureStyle: opts.style }),
       textFont,
       ...(source ? { source } : {}),
       appendCertificate: opts.certificate !== false,
@@ -221,6 +230,9 @@ program
     console.log(`${dim('record')}  ${outRecord}`);
     console.log(`${dim('id')}      ${result.audit.recordId}`);
     console.log(`${dim('sha256')}  ${formatHash(result.audit.signedHash)}`);
+    if (result.audit.signatureStyle) {
+      console.log(`${dim('style')}   ${signatureStyle(result.audit.signatureStyle).label}`);
+    }
     console.log();
     console.log(dim('Keep the record file. It is what proves the document has not changed.'));
   });
@@ -311,6 +323,7 @@ program
 
     console.log(`${bold(record.documentName)}  ${dim(record.recordId)}`);
     console.log(`${dim('signer')}    ${record.signer.name}${email}`);
+    if (record.signatureStyle) console.log(`${dim('style')}     ${signatureStyle(record.signatureStyle).label}`);
     console.log(`${dim('signed')}    ${record.signedAt}`);
     console.log(`${dim('original')}  ${formatHash(record.originalHash)}`);
     console.log(`${dim('sealed')}    ${formatHash(record.signedHash)}`);

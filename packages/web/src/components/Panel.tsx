@@ -1,7 +1,8 @@
-import type { FieldKind } from '@sealmark/core';
+import type { FieldKind, SignatureStyleId } from '@sealmark/core';
 import { initialsOf } from '@sealmark/core';
 import { FIELD_LABEL, type PlacedField, type Signer } from '../types.js';
 import { DateIcon, InitialsIcon, ShieldIcon, SignatureIcon, TextIcon } from './Icons.js';
+import { StylePicker } from './StylePicker.js';
 
 const TOOLS: Array<{ kind: FieldKind; icon: typeof SignatureIcon }> = [
   { kind: 'signature', icon: SignatureIcon },
@@ -13,6 +14,8 @@ const TOOLS: Array<{ kind: FieldKind; icon: typeof SignatureIcon }> = [
 interface PanelProps {
   signer: Signer;
   onSignerChange: (signer: Signer) => void;
+  style: SignatureStyleId;
+  onStyleChange: (style: SignatureStyleId) => void;
   armed: FieldKind | null;
   onArm: (kind: FieldKind | null) => void;
   textValue: string;
@@ -27,6 +30,8 @@ interface PanelProps {
 export function Panel({
   signer,
   onSignerChange,
+  style,
+  onStyleChange,
   armed,
   onArm,
   textValue,
@@ -67,10 +72,10 @@ export function Panel({
             onChange={(event) => onSignerChange({ ...signer, email: event.target.value })}
           />
         </div>
+      </section>
 
-        <div className={`signature-preview${named ? '' : ' is-empty'}`} aria-live="polite">
-          {named ? signer.name : 'Your signature appears here'}
-        </div>
+      <section className="panel-section">
+        <StylePicker name={signer.name} value={style} onChange={onStyleChange} />
       </section>
 
       <section className="panel-section">

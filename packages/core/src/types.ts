@@ -1,4 +1,5 @@
 import type { PageSize } from './convert.js';
+import type { SignatureStyleId } from './styles.js';
 
 /** Field kinds Sealmark can stamp onto a document. */
 export type FieldKind = 'signature' | 'initials' | 'date' | 'text';
@@ -92,6 +93,11 @@ export interface SignOptions {
   /** TrueType/OpenType bytes used to render signature and initials fields. */
   scriptFont: Uint8Array;
   /**
+   * Which built-in style `scriptFont` is, recorded so the record says how the
+   * signature was drawn. Omit when signing with a custom font.
+   */
+  signatureStyle?: SignatureStyleId;
+  /**
    * TrueType/OpenType bytes for plain text: date and text fields and the
    * certificate page. Must cover the characters people actually use in names —
    * PDF's built-in fonts cannot encode "ł", so a Polish signer could not sign.
@@ -136,6 +142,8 @@ export interface AuditRecord {
   signedHash: string;
   /** Present when the signed PDF was made from other files. */
   source?: SourceRecord;
+  /** The built-in signature style used, when one was. */
+  signatureStyle?: SignatureStyleId;
   fields: Array<{ kind: FieldKind; page: number; value: string }>;
   events: AuditEvent[];
   producer: string;

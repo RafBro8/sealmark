@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AuditRecord, FieldKind, FieldSpec, Placement, SourceFileInput, SourceInput } from '@sealmark/core';
+import type { AuditRecord, FieldKind, FieldSpec, Placement, SignatureStyleId, SourceFileInput, SourceInput } from '@sealmark/core';
 import { initialsOf, isoDate, signDocument } from '@sealmark/core';
 import { loadDocument, type LoadedDocument } from './lib/pdf.js';
-import { ensureScriptFace, scriptFontBytes, textFontBytes } from './lib/font.js';
+import { textFontBytes } from './lib/font.js';
+import { ensureStyleFace, familyFor, saveStyle, savedStyle, styleFontBytes } from './lib/styles.js';
 import { defaultPageSize, prepareFiles } from './lib/prepare.js';
 import { Intake } from './components/Intake.js';
 import { PageView } from './components/PageView.js';
@@ -59,6 +60,7 @@ function stepDown(current: number): number {
 export function App() {
   const [doc, setDoc] = useState<OpenDocument | null>(null);
   const [signer, setSigner] = useState<Signer>({ name: '', email: '' });
+  const [style, setStyle] = useState<SignatureStyleId>(savedStyle);
   const [fields, setFields] = useState<PlacedField[]>([]);
   const [armed, setArmed] = useState<FieldKind | null>(null);
   const [textValue, setTextValue] = useState('');
@@ -71,10 +73,15 @@ export function App() {
 
   const pagesRef = useRef<HTMLDivElement>(null);
 
-  // Load the script face early so the first preview does not flash in a
+  // Load the chosen face early so fields on the page do not flash in a
   // fallback font.
   useEffect(() => {
-    void ensureScriptFace().catch(() => undefined);
+    void ensureStyleFace(style).catch(() => undefined);
+  }, [style]);
+
+  const chooseStyle = useCallback((id: SignatureStyleId) => {
+    setStyle(id);
+    saveStyle(id);
   }, []);
 
   // Open at a zoom that fits the viewer, so a letter-size page does not arrive
@@ -187,7 +194,7 @@ export function App() {
     setError(null);
 
     try {
-      const [scriptFont, textFont] = await Promise.all([scriptFontBytes(), textFontBytes()]);
+      const [scriptFont, textFont] = await Promise.all([styleFontBytes(style), textFontBytes()]);
       const specs: FieldSpec[] = fields.map((field) => ({
         kind: field.kind,
         placement: field.placement,
@@ -201,6 +208,7 @@ export function App() {
         signer: { name: signer.name.trim(), ...(email ? { email } : {}) },
         fields: specs,
         scriptFont,
+        signatureStyle: style,
         textFont,
         ...(doc.source ? { source: doc.source } : {}),
       });
@@ -211,7 +219,7 @@ export function App() {
     } finally {
       setBusy(false);
     }
-  }, [doc, fields, signer]);
+  }, [doc, fields, signer, style]);
 
   const startOver = useCallback(() => {
     setSealed(null);
@@ -309,6 +317,7 @@ export function App() {
                     fields={fieldsByPage.get(page.index) ?? []}
                     armed={armed}
                     displayTextFor={displayTextFor}
+                    scriptFamily={familyFor(style)}
                     onPlace={place}
                     onChange={change}
                     onRemove={remove}
@@ -320,6 +329,8 @@ export function App() {
             <Panel
               signer={signer}
               onSignerChange={setSigner}
+              style={style}
+              onStyleChange={chooseStyle}
               armed={armed}
               onArm={setArmed}
               textValue={textValue}

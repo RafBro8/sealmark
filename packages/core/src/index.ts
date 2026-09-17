@@ -46,3 +46,11 @@ export {
 export type { Orientation, Matrix } from './orientation.js';
 export { detectKind, planIntake, extensionOf, mediaTypeFor } from './intake.js';
 export type { InputKind, IntakeFile, IntakePlan } from './intake.js';
+export {
+  SIGNATURE_STYLES,
+  DEFAULT_SIGNATURE_STYLE,
+  signatureStyle,
+  isSignatureStyleId,
+  missingGlyphs,
+} from './styles.js';
+export type { SignatureStyle, SignatureStyleId } from './styles.js';

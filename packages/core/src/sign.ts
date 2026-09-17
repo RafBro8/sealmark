@@ -12,6 +12,7 @@ import { sha256Hex, sha256Text } from './hash.js';
 import { stampFields } from './stamp.js';
 import { appendCertificate } from './certificate.js';
 import { PRODUCER } from './version.js';
+import { signatureStyle } from './styles.js';
 
 export { PRODUCER };
 
@@ -71,6 +72,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
     signer,
     fields,
     scriptFont,
+    signatureStyle: styleId,
     textFont,
     source: sourceInput,
     now = new Date(),
@@ -88,6 +90,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
   const originalHash = await sha256Hex(document);
   const recordId = await deriveRecordId(originalHash, signedAt, signer.name);
   const source = sourceInput ? await fingerprintSource(sourceInput) : undefined;
+  if (styleId !== undefined) signatureStyle(styleId); // fail early on an unknown id
 
   const events: AuditEvent[] = [];
 
@@ -138,6 +141,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
       events: [...events],
       recordFileName: recordFileNameFor(documentName),
       ...(source ? { source } : {}),
+      ...(styleId ? { signatureStyle: signatureStyle(styleId).label } : {}),
     });
     events.push({
       at: signedAt,
@@ -169,6 +173,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
     originalHash,
     signedHash,
     ...(source ? { source } : {}),
+    ...(styleId ? { signatureStyle: styleId } : {}),
     fields: stamped,
     events,
     producer: PRODUCER,

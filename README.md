@@ -8,9 +8,9 @@ document started life as photos or a text file — **what it was made from**. Al
 one byte of a sealed document — a digit in a price, a word in a clause, a scrap of
 metadata — and verification fails.
 
-> **Status:** Phase 3 of 6. Signing, verification, the command line tool, the
-> browser app and in-browser document conversion are complete and tested. See
-> [Roadmap](#roadmap).
+> **Status:** Signing, verification, the command line tool, the browser app,
+> in-browser document conversion and signature styles are complete and tested.
+> Evidence hardening and remote signing remain. See [Roadmap](#roadmap).
 
 ---
 
@@ -104,6 +104,34 @@ A photo in a format the PDF library cannot embed directly, such as WebP, is deco
 by the browser first. Browsers do not promise byte-identical re-encoding, so the
 record marks that file, and verification will match its fingerprint but declines to
 claim the conversion can be repeated.
+
+## Signature styles
+
+Five styles, each shown with the signer's own name so the choice is made by looking
+at the signature rather than at a font name:
+
+| Style | Character | Face |
+| --- | --- | --- |
+| Classic | Formal, with flourishes | Great Vibes |
+| Graceful | Round and open | Parisienne |
+| Relaxed | Light, everyday handwriting | Sacramento |
+| Bold | Confident brush strokes | Yellowtail |
+| Quill | Old-fashioned pen and ink | Meddon |
+
+The preview on the page is drawn from the same font file that gets stamped, and the
+chosen style is written into the record and onto the certificate. The browser
+remembers the last style used. On the command line: `--style quill`.
+
+Script fonts were admitted on coverage, not looks. Fifteen candidates were checked
+against Polish, Western and Eastern European letters; several of the most
+convincing "real signature" faces cannot write `ł` or `č` and were rejected, and a
+test holds every style to that bar. If a name still contains a character a style
+cannot write, that style is greyed out with the reason rather than failing at the
+moment of signing.
+
+Faces differ in proportion: in the same box Quill's tall loops stamp noticeably
+smaller than Classic. The preview shows this before signing — make the field taller
+for a larger Quill signature.
 
 ### Any language a name comes in
 
@@ -246,9 +274,9 @@ authority — never the document, and only when the user enables it.
 ### Known cost
 
 The production bundle is around 670 KB gzipped, dominated by pdf.js, pdf-lib and
-fontkit, plus two fonts: 457 KB for signatures and 657 KB for text, the latter
-loaded only when signing or converting. Acceptable for an app, heavy for a first
-visit. Code-splitting the signing path and subsetting the fonts are queued for
+fontkit, plus fonts: about 790 KB across the five signature styles, loaded when the
+style picker appears, and 657 KB for text, loaded only when signing or converting.
+Acceptable for an app, heavy for a first visit. Code-splitting the signing path and subsetting the fonts are queued for
 phase 4.
 
 ---
@@ -256,7 +284,7 @@ phase 4.
 ## Development
 
 ```bash
-npm test           # vitest, 135 tests
+npm test           # vitest, 166 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -273,7 +301,7 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
 4. **Evidence hardening** — RFC 3161 trusted timestamps, signed-document archive, offline PWA, smaller bundle.
-5. **Signature styles** — a choice of several signature faces to sign in, each previewed with the signer's own name.
+5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 
 ---
@@ -281,5 +309,6 @@ npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 ## Licence
 
 All rights reserved for now. The fonts in `packages/core/assets` are licensed
-separately under the SIL Open Font License: Great Vibes (`GreatVibes-OFL.txt`) and
-Lato (`Lato-OFL.txt`).
+separately, each with its licence file alongside: Great Vibes, Parisienne,
+Sacramento, Meddon and Lato under the SIL Open Font License, and Yellowtail under
+the Apache License 2.0.

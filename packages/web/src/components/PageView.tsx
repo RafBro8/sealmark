@@ -13,6 +13,7 @@ interface PageViewProps {
   fields: PlacedField[];
   armed: FieldKind | null;
   displayTextFor: (field: PlacedField) => string;
+  scriptFamily: string;
   onPlace: (kind: FieldKind, placement: Placement) => void;
   onChange: (id: string, placement: Placement) => void;
   onRemove: (id: string) => void;
@@ -25,6 +26,7 @@ export function PageView({
   fields,
   armed,
   displayTextFor,
+  scriptFamily,
   onPlace,
   onChange,
   onRemove,
@@ -85,6 +87,7 @@ export function PageView({
             field={field}
             geometry={geometry}
             displayText={displayTextFor(field)}
+            scriptFamily={scriptFamily}
             onChange={onChange}
             onRemove={onRemove}
           />
