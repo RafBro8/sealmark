@@ -70,17 +70,19 @@ about the security headers.
 fallback. Vercel reads neither `_headers` nor `_redirects`, so both are
 translated into it — see below.
 
-Deploying from this machine:
+**The GitHub repo is connected, so a push to `main` deploys on its own** —
+confirmed by watching a deployment start one second after a push, with nothing
+run locally. Pull requests get their own preview URLs. Note that `vercel project
+inspect` does not show the Git connection, so do not read its absence there as
+meaning it is not connected; push and watch `vercel ls` instead.
+
+Deploying by hand, when you want to skip the repo:
 
 ```bash
 npx vercel deploy          # a preview, with its own URL
 npx vercel deploy --prod   # promote to the project's production URL
+npx vercel ls sealmark     # what is deployed, and what is still building
 ```
-
-Better, once you want this to run itself: connect the GitHub repo in the Vercel
-dashboard (Project → Settings → Git). Then a push to `main` deploys, and pull
-requests get their own preview URLs. The CLI project and the repo are the same
-project; connecting Git does not create a second one.
 
 ### Render
 
@@ -223,6 +225,39 @@ mid-signature.
 instantly from its dashboard — faster than a revert commit and a rebuild. Do
 that first, then fix forward. A rollback also rolls the service worker back, so
 installed copies follow within a visit.
+
+---
+
+## Checking it on an iPhone
+
+Everything so far has been exercised in Chromium. iOS is a genuinely different
+engine, and every browser on it is WebKit, so testing Safari on a phone covers
+the lot. In rough order of how likely each is to actually break:
+
+1. **Saving the two files.** Signing produces a PDF *and* a `.sealmark.json`
+   record, saved one after the other. iOS Safari has historically been awkward
+   about a second programmatic download. Check that **both** land in Files — the
+   record is the evidence, and a signed PDF without it is much weaker.
+2. **Placing fields by touch.** Tap to place, drag to move, drag the corner
+   handle to resize. The code uses pointer events, which should cover touch, but
+   that has never been tried on a touchscreen. Watch for the page scrolling when
+   you meant to drag a field.
+3. **A photo straight from the camera.** Take a picture of a paper page and sign
+   it. iPhones shoot HEIC, and Safari is the only browser that can decode it —
+   so this is the one place it should work *better* than on a desktop. If it
+   cannot, the app should say so and point at Settings › Camera › Formats rather
+   than failing silently.
+4. **Add to Home Screen**, open it from the icon, confirm it runs without Safari
+   chrome around it, then turn on aeroplane mode and sign something. Offline is a
+   promise the app makes on its own front page.
+5. **A real PDF from Files**, ideally a few pages. pdf.js renders to canvas, and
+   iOS is stricter about canvas memory than a desktop.
+6. **The rest:** signature styles all render, a trusted timestamp succeeds,
+   rotating to landscape does not break the layout, and the Verify screen accepts
+   the two files you just saved and reports Verified.
+
+Anything that fails here is worth reporting with the iOS version — WebKit bugs
+tend to be version-specific.
 
 ---
 
