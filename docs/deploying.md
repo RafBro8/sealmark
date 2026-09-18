@@ -181,7 +181,7 @@ Also worth doing once before the first deploy:
 - `node scripts/third-party-notices.mjs` — regenerate THIRD-PARTY-NOTICES.md if
   dependencies changed. It must ship with any build installed for a client.
 - Check `measure-bundle` output hasn't crept: the first visit is the promise,
-  and it is currently ~65 KB.
+  and it is currently ~66 KB.
 
 ---
 

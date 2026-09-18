@@ -31,7 +31,7 @@ async function signedFromPhotos(pageSize: 'letter' | 'a4'): Promise<AuditRecord>
   const { audit } = await signDocument({
     document: pdf,
     documentName: 'contract.pdf',
-    signer: { name: 'Rafał Brodziński' },
+    signer: { name: 'Michał Kowalski' },
     fields: FIELD,
     scriptFont,
     textFont,

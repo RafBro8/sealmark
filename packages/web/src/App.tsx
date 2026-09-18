@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AuditRecord, FieldKind, FieldSpec, Placement, SignatureStyleId, SourceFileInput, SourceInput } from '@sealmark/core';
 import { initialsOf, isoDate } from '@sealmark/core/light';
 import { loadDocument, type LoadedDocument } from './lib/pdf.js';
@@ -16,6 +16,11 @@ import { AppUpdates } from './components/AppUpdates.js';
 import { useOnline } from './lib/online.js';
 import { MinusIcon, PlusIcon, SealLogo, ShieldIcon } from './components/Icons.js';
 import type { PlacedField, Signer } from './types.js';
+
+// Nobody arrives at Sealmark to read the privacy statement, so its text does not
+// belong in the first visit. The service worker still precaches it, so it opens
+// offline like the rest of the app.
+const Legal = lazy(() => import('./components/Legal.js').then((module) => ({ default: module.Legal })));
 
 interface OpenDocument {
   name: string;
@@ -65,8 +70,22 @@ function stepDown(current: number): number {
 
 type Mode = 'sign' | 'verify';
 
+/**
+ * The privacy statement has a real URL so it can be linked to directly. The app
+ * has no router; the host rewrites unknown paths to index.html and this reads
+ * the path back, which is the whole of it.
+ */
+const LEGAL_PATH = '/privacy';
+
+function legalFromLocation(): boolean {
+  const path = window.location.pathname;
+  const trimmed = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+  return trimmed === LEGAL_PATH;
+}
+
 export function App() {
   const [mode, setMode] = useState<Mode>('sign');
+  const [legal, setLegal] = useState(legalFromLocation);
   const online = useOnline();
   const [doc, setDoc] = useState<OpenDocument | null>(null);
   const [signer, setSigner] = useState<Signer>({ name: '', email: '' });
@@ -91,6 +110,24 @@ export function App() {
   useEffect(() => {
     if (hasDocument) void ensureStyleFace(style).catch(() => undefined);
   }, [style, hasDocument]);
+
+  // Back and forward should move between the app and the privacy page.
+  useEffect(() => {
+    const sync = () => setLegal(legalFromLocation());
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  const openLegal = useCallback(() => {
+    window.history.pushState({}, '', LEGAL_PATH);
+    setLegal(true);
+    window.scrollTo(0, 0);
+  }, []);
+
+  const closeLegal = useCallback(() => {
+    window.history.pushState({}, '', '/');
+    setLegal(false);
+  }, []);
 
   const chooseStyle = useCallback((id: SignatureStyleId) => {
     setStyle(id);
@@ -320,10 +357,14 @@ export function App() {
       <AppUpdates />
       <div className="main">
         {/* Kept mounted while hidden, so files added for verification survive a trip to Sign. */}
-        <div className="mode-panel" hidden={mode !== 'verify'}>
+        <div className="mode-panel" hidden={legal || mode !== 'verify'}>
           <Verify />
         </div>
-        {mode === 'verify' ? null : sealed ? (
+        {legal ? (
+          <Suspense fallback={<div className="legal" />}>
+            <Legal onClose={closeLegal} />
+          </Suspense>
+        ) : mode === 'verify' ? null : sealed ? (
           <Result
             pdf={sealed.pdf}
             audit={sealed.audit}
@@ -420,6 +461,20 @@ export function App() {
           </>
         )}
       </div>
+
+      {/* Hidden while a document is open: the viewer needs the vertical space,
+          and this is not the moment to invite someone away to read a policy. */}
+      {!legal && mode === 'sign' && doc && !sealed ? null : (
+        <footer className="footer">
+          <span>No accounts, no uploads, no tracking.</span>
+          <button type="button" className="link" onClick={openLegal}>
+            Privacy and terms
+          </button>
+          <a className="link" href="https://github.com/RafBro8/sealmark" target="_blank" rel="noopener noreferrer">
+            Source
+          </a>
+        </footer>
+      )}
     </div>
   );
 }

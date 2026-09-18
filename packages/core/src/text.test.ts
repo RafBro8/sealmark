@@ -3,7 +3,7 @@ import { initialsOf, isoDate } from './text.js';
 
 describe('initialsOf', () => {
   it('takes first and last initials', () => {
-    expect(initialsOf('Rafal Brodzinski')).toBe('RB');
+    expect(initialsOf('Jordan Reyes')).toBe('JR');
   });
 
   it('skips middle names', () => {

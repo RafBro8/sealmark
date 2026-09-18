@@ -9,7 +9,7 @@ one byte of a sealed document — a digit in a price, a word in a clause, a scra
 metadata — and verification fails.
 
 > **Status:** Signing, verification in the browser and on the command line,
-> in-browser document conversion, signature styles, trusted timestamps, a 65 KB
+> in-browser document conversion, signature styles, trusted timestamps, a 66 KB
 > first visit and offline use are complete and tested. Remote signing remains.
 > See [Roadmap](#roadmap).
 
@@ -97,7 +97,7 @@ because a reload in the middle of placing fields would lose them. Tested by serv
 a changed build to a page running the saved one: the notice appeared, the page kept
 running the old version, and Reload switched it.
 
-**What this costs.** The page itself still becomes usable after 65 KB. The service
+**What this costs.** The page itself still becomes usable after 66 KB. The service
 worker then saves the rest in the background — 28 files, 1.8 MB gzipped or about
 1.5 MB with Brotli — which is what makes offline use possible. `_headers` tells
 hosts to re-check `sw.js`, `index.html` and the manifest on every visit, so a
@@ -105,6 +105,20 @@ published update reaches people instead of sitting behind a long cache.
 
 The app icons are rendered from the seal logo by `node scripts/make-icons.mjs`,
 including a maskable version that keeps the seal inside Android's safe zone.
+
+## Privacy and terms
+
+The app states its own privacy position at `/privacy`, reachable from the footer:
+what happens to a document, the single request that can leave the browser and
+what it contains, what is kept in local storage, and four ways a reader can check
+all of it rather than believe it. The terms alongside it say what a Sealmark
+signature proves and what it does not.
+
+The page names the timestamp host by importing the same constant the signing code
+calls, so it cannot drift into describing a service the app does not use, and a
+test asserts that host is the one the Content-Security-Policy allows. Its text is
+loaded on demand — nobody opens Sealmark to read a policy — and precached with
+everything else, so it works offline.
 
 ## Verifying a signed document
 
@@ -305,7 +319,7 @@ and exits with code `2`, which makes it usable in a script or a CI check.
 ```bash
 # Photos of a paper contract, converted and signed in one step
 npx tsx packages/cli/src/index.ts sign scans/page-1.jpg scans/page-2.jpg \
-  --name "Rafał Brodziński" --field "signature:2:60,90,220,26" --page-size a4
+  --name "Michał Kowalski" --field "signature:2:60,90,220,26" --page-size a4
 
 # Later: confirm the photos are the originals, and that they convert to exactly the signed PDF
 npx tsx packages/cli/src/index.ts verify scans/page-1.signed.pdf --source scans/page-1.jpg scans/page-2.jpg
@@ -396,7 +410,7 @@ other host is blocked by the browser, and the timestamp request goes through.
 
 ### Download size
 
-A first visit downloads **65 KB** of gzipped code — the app shell and the intake
+A first visit downloads **66 KB** of gzipped code — the app shell and the intake
 screen. Everything else arrives when it is first needed:
 
 | When | What loads |
@@ -495,7 +509,7 @@ Putting signing into someone else's site: **[docs/integrating.md](docs/integrati
 1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** — RFC 3161 trusted timestamps, a 65 KB first visit, offline use and installation. *Complete.*
+4. **Evidence hardening** — RFC 3161 trusted timestamps, a 66 KB first visit, offline use and installation. *Complete.*
 5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
 

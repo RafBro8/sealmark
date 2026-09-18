@@ -12,7 +12,7 @@ const FONT = fileURLToPath(new URL('../assets/GreatVibes-Regular.ttf', import.me
 const TEXT_FONT = fileURLToPath(new URL('../assets/Lato-Regular.ttf', import.meta.url));
 
 const NOW = new Date('2026-09-15T12:00:00.000Z');
-const SIGNER = { name: 'Rafal Brodzinski', email: 'rafbrodi@gmail.com' };
+const SIGNER = { name: 'Jordan Reyes', email: 'jordan@example.com' };
 const FIELDS: FieldSpec[] = [
   { kind: 'signature', placement: { page: 0, x: 60, y: 125, width: 230, height: 45 } },
   { kind: 'date', placement: { page: 0, x: 334, y: 126, width: 130, height: 22 } },
@@ -74,7 +74,7 @@ describe('signDocument', () => {
   it('derives signature and date values from the signer and the clock', async () => {
     const { audit } = await sign();
     expect(audit.fields).toEqual([
-      { kind: 'signature', page: 0, value: 'Rafal Brodzinski' },
+      { kind: 'signature', page: 0, value: 'Jordan Reyes' },
       { kind: 'date', page: 0, value: '2026-09-15' },
     ]);
   });
@@ -158,8 +158,8 @@ describe('parseAuditRecord', () => {
 describe('non-Latin names and text', () => {
   it('signs for a name PDF standard fonts cannot encode', async () => {
     // Regression: Helvetica is WinAnsi-only, so "ł" used to abort signing entirely.
-    const { audit } = await sign({ signer: { name: 'Rafał Brodziński' } });
-    expect(audit.fields[0]?.value).toBe('Rafał Brodziński');
+    const { audit } = await sign({ signer: { name: 'Michał Kowalski' } });
+    expect(audit.fields[0]?.value).toBe('Michał Kowalski');
   });
 
   it('accepts accented text in a text field', async () => {

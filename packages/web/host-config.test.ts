@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { generate, parseHeaders } from '../../scripts/sync-host-config.mjs';
+import { TIMESTAMP_ENDPOINT } from '@sealmark/core/light';
 
 const read = (relative: string) => readFileSync(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
 
@@ -50,5 +51,16 @@ describe('vercel.json', () => {
     // page instead of Sealmark, and the two hosts disagree.
     const config = JSON.parse(generate());
     expect(config.rewrites).toContainEqual({ source: '/(.*)', destination: '/index.html' });
+  });
+});
+
+describe('the policy and the code agree on where timestamps go', () => {
+  it('allows exactly the endpoint the signing code calls', () => {
+    // The privacy page tells people this is the only host Sealmark can reach,
+    // and names it from TIMESTAMP_ENDPOINT. If the endpoint moves and the policy
+    // does not, that claim becomes false and timestamps break in production.
+    const rules = parseHeaders(read('./public/_headers'));
+    const csp = rules[0].headers.find((header: { key: string }) => header.key === 'Content-Security-Policy').value;
+    expect(csp).toContain(new URL(TIMESTAMP_ENDPOINT).origin);
   });
 });

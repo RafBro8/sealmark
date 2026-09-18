@@ -39,7 +39,7 @@ export function fitText(
   };
 }
 
-/** `Rafal Brodzinski` -> `RB`. Falls back to the first two characters. */
+/** `Jordan Reyes` -> `JR`. Falls back to the first two characters. */
 export function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '';
