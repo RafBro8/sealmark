@@ -12,3 +12,5 @@ coverage/
 fixtures/out/
 *.sealmark.json
 !fixtures/**/*.sealmark.json
+
+.vercel

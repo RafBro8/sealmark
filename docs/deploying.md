@@ -23,12 +23,26 @@ Everything lands in `packages/web/dist`:
 | `index.html`, `assets/*` | the app; hashed filenames, cached forever |
 | `sw.js`, `workbox-*.js` | the service worker that makes it work offline |
 | `manifest.webmanifest`, `icon-*.png` | what makes it installable |
-| `_headers` | security headers, read by Cloudflare Pages and Netlify |
+| `_headers` | the security headers; the source `vercel.json` is generated from |
 | `_redirects` | keeps deep links on the app instead of a host 404 |
 
-`_headers` and `_redirects` are plain files copied from
-`packages/web/public/`. Hosts that read them need no dashboard configuration.
-Hosts that don't need `vercel.json` — see below.
+`_headers` and `_redirects` are plain files copied from `packages/web/public/`.
+Some hosts read them as they are; Vercel does not, and gets the same rules from
+the generated `vercel.json` instead — see below.
+
+---
+
+## Where it is deployed now
+
+**https://sealmark-ten.vercel.app** — Vercel project `raf-dev/sealmark`, no
+custom domain attached, so `sealmark.app` is still free to point wherever you
+like.
+
+A note on how it got there: `vercel deploy` normally creates a *preview*, but
+Vercel promotes a project's **first** deployment to production automatically. So
+that URL is the production target of the Vercel project. It is still only a
+`.vercel.app` address — "production" in Vercel's sense, not in yours. Every later
+`vercel deploy` is a preview with its own URL; `--prod` is what promotes one.
 
 ---
 
@@ -42,13 +56,48 @@ The same two values everywhere:
 
 | Host | Configuration | Headers |
 | --- | --- | --- |
-| **Cloudflare Pages** | set the two values in the dashboard | reads `_headers` |
-| **Netlify** | `netlify.toml` in the repo root | reads `_headers` |
-| **Vercel** | `vercel.json` in the repo root | from `vercel.json` |
+| **Vercel** *(in use)* | `vercel.json` in the repo root | from `vercel.json` |
+| **Render** | static site; needs its own header config | see below |
+| Cloudflare Pages | set the two values in the dashboard | reads `_headers` |
 
-Cloudflare Pages is the recommendation for sealmark.app: it reads `_headers`
-directly, so the security policy lives in one file next to the code rather than
-in a dashboard nobody reviews.
+Sealmark is a folder of static files, so any of these can serve it and switching
+hosts is a rebuild, not a rewrite. What differs is only how each one is told
+about the security headers.
+
+### Vercel
+
+`vercel.json` carries the build settings, the security headers and the SPA
+fallback. Vercel reads neither `_headers` nor `_redirects`, so both are
+translated into it — see below.
+
+Deploying from this machine:
+
+```bash
+npx vercel deploy          # a preview, with its own URL
+npx vercel deploy --prod   # promote to the project's production URL
+```
+
+Better, once you want this to run itself: connect the GitHub repo in the Vercel
+dashboard (Project → Settings → Git). Then a push to `main` deploys, and pull
+requests get their own preview URLs. The CLI project and the repo are the same
+project; connecting Git does not create a second one.
+
+### Render
+
+Render is a fine alternative but needs more setting up, because it reads neither
+`_headers` nor `_redirects` **and** has no generated config in this repo yet.
+Create a **Static Site**, point it at the repo, set the build command and
+publish directory above, and then add, in `render.yaml` or the dashboard:
+
+- every header from `packages/web/public/_headers`, including the
+  Content-Security-Policy — without it the privacy claim is a promise rather
+  than something the browser enforces
+- a rewrite of `/*` to `/index.html`
+
+If you do move to Render, extend `scripts/sync-host-config.mjs` to emit
+`render.yaml` the way it emits `vercel.json`, rather than hand-copying the
+policy. Two hand-maintained copies of a security header is precisely the drift
+that config generator exists to prevent.
 
 ### Keeping vercel.json honest
 
@@ -61,6 +110,11 @@ node scripts/sync-host-config.mjs
 `packages/web/host-config.test.ts` fails if `vercel.json` has drifted from
 `_headers`, so the two cannot silently disagree — a tightened policy in one file
 and a stale one in the other is exactly the failure that would go unnoticed.
+
+The generated config also contains the equivalent of `_redirects`: a rewrite of
+everything to `/index.html`. Vercel checks rewrites only after looking for a real
+file, so it cannot shadow the assets, the service worker or the manifest — all
+verified against the live deployment.
 
 ---
 
@@ -90,11 +144,17 @@ to change for that build, and only for that build — see
 
 ## DNS
 
-At the registrar for **sealmark.app**, pointing at the host:
+Nothing here is done yet — `sealmark.app` points nowhere, which is why the app
+is on a `.vercel.app` address for now.
 
-- apex `sealmark.app` — the host's A/ALIAS record (Cloudflare Pages and Netlify
-  both provide one; an apex CNAME is not valid DNS)
-- `www.sealmark.app` — CNAME to the host, redirecting to the apex
+When you are ready, add the domain in **Vercel → Project → Settings → Domains**
+first, then create the records it displays at the registrar. Use the values
+Vercel shows rather than any written here; they are per-project and they change.
+The shape is always:
+
+- apex `sealmark.app` — an A record at the host's address (an apex CNAME is not
+  valid DNS, which is why hosts publish an IP for this)
+- `www.sealmark.app` — a CNAME to the host, redirecting to the apex
 
 `.app` is on the HSTS preload list, so browsers refuse plain HTTP for it
 outright. There is no http→https redirect to configure and no way to serve the
@@ -128,14 +188,19 @@ Also worth doing once before the first deploy:
 ## After deploying
 
 ```bash
-node scripts/check-deployment.mjs https://sealmark.app
+node scripts/check-deployment.mjs https://sealmark-ten.vercel.app
 ```
 
 This is the check that matters, because it tests the **host**, not the build. It
 confirms the security headers actually arrive, the policy still contains every
 directive, the service worker and manifest are served, the icons exist, the
-service worker is re-checked on each visit, and responses are compressed. A host
-that quietly ignores `_headers` passes every local test and fails here.
+service worker is re-checked on each visit, and the code and fonts are
+compressed. A host that quietly ignores its header config passes every local test
+and fails here.
+
+Against the Vercel deployment it currently passes 26 of 26. Run it again after
+attaching `sealmark.app`, because a custom domain is a different route into the
+host and is worth re-proving.
 
 Then, by hand, once:
 

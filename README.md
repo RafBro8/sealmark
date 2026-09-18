@@ -71,9 +71,9 @@ and you will see only the app's own assets load.
 
 In production the `connect-src 'self'` rule in
 [`packages/web/public/_headers`](packages/web/public/_headers) makes that a
-browser-enforced constraint rather than a promise. It is read automatically by
-Cloudflare Pages and Netlify; on another host, serve the same
-`Content-Security-Policy` header.
+browser-enforced constraint rather than a promise. On the deployed site it
+arrives on every response, verified against the live host by
+`node scripts/check-deployment.mjs <url>`.
 
 ## Offline, and installable
 
@@ -416,7 +416,7 @@ signing, conversion, timestamps, verification or pdf.js directly rather than on
 demand.
 
 **Fonts** total 675 KB gzipped, or about 510 KB where the host serves Brotli, as
-Cloudflare Pages and Netlify do. They were considered for trimming one at a time,
+the deployed site does. They were considered for trimming one at a time,
 because the SIL Open Font License counts trimming as a modification and forbids a
 modified font from keeping a Reserved Font Name (OFL-FAQ 2.6):
 
@@ -437,7 +437,7 @@ modified font from keeping a Reserved Font Name (OFL-FAQ 2.6):
 ## Development
 
 ```bash
-npm test           # vitest, 225 tests
+npm test           # vitest, 226 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -470,10 +470,13 @@ Sealmark is a static site: `npm run build --workspace @sealmark/web` produces
 database and no runtime secret — which is the privacy claim restated as
 architecture.
 
-The security headers live in `packages/web/public/_headers`, read directly by
-Cloudflare Pages and Netlify. Vercel ignores that file, so `vercel.json` is
-generated from it by `scripts/sync-host-config.mjs`, and a test fails if the two
-drift apart.
+It is deployed on Vercel at
+[sealmark-ten.vercel.app](https://sealmark-ten.vercel.app), with no custom domain
+attached yet.
+
+The security headers live in `packages/web/public/_headers`. Vercel reads neither
+that file nor `_redirects`, so `vercel.json` is generated from them by
+`scripts/sync-host-config.mjs`, and a test fails if the two drift apart.
 
 `scripts/check-deployment.mjs` is the gate. Against a build directory it runs in
 CI and catches anything that only appears in a real build — an inline script the

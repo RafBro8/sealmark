@@ -1,4 +1,6 @@
-# Security headers for static hosts that read this file (Cloudflare Pages, Netlify).
+# Security headers. The source of truth: hosts using this format (Cloudflare
+# Pages, Netlify) read it directly, and scripts/sync-host-config.mjs turns it
+# into vercel.json for the host Sealmark actually runs on.
 # The connect-src rule is the load-bearing one: it is what stops the page from
 # sending a document anywhere, enforced by the browser rather than promised.
 # Its one exception is the timestamp relay, which only ever receives a SHA-256

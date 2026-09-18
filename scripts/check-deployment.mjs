@@ -84,7 +84,8 @@ async function checkLive(base) {
     else fail(`policy keeps ${directive}`, csp || 'no policy sent');
   }
 
-  checkIndexHtml(await index.text());
+  const html = await index.text();
+  checkIndexHtml(html);
 
   const sw = await fetch(`${origin}/sw.js`);
   if (sw.ok) {
@@ -111,13 +112,21 @@ async function checkLive(base) {
     else fail(`serves ${icon}`, `HTTP ${response.status}`);
   }
 
-  // Compression is the difference between 750 KB and 510 KB of fonts.
-  const font = await fetch(`${origin}/`, { headers: { 'Accept-Encoding': 'br, gzip' } });
-  const encoding = font.headers.get('content-encoding');
+  // Compression is the difference between 750 KB and 510 KB of fonts, so this has
+  // to ask about the code, not about index.html. Hosts commonly serve a page that
+  // small uncompressed while compressing the assets perfectly well, and checking
+  // the page instead reports a problem that is not there.
   const local = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin);
-  if (encoding) pass(`compresses responses (${encoding})`);
-  else if (local) warn('compresses responses', 'the local preview does not compress; a real host will');
-  else fail('compresses responses', 'no Content-Encoding — fonts and code will transfer uncompressed');
+  const asset = html.match(/\/assets\/[A-Za-z0-9._-]+\.js/)?.[0];
+  if (!asset) {
+    fail('compresses the code and fonts', 'no hashed asset found in index.html to test');
+  } else {
+    const response = await fetch(`${origin}${asset}`, { headers: { 'Accept-Encoding': 'br, gzip' } });
+    const encoding = response.headers.get('content-encoding');
+    if (encoding) pass(`compresses the code and fonts (${encoding})`);
+    else if (local) warn('compresses the code and fonts', 'the local preview does not compress; a real host will');
+    else fail('compresses the code and fonts', `${asset} came back with no Content-Encoding`);
+  }
 }
 
 function checkDist(dir) {
