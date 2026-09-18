@@ -1,0 +1,4 @@
+# Sealmark is a single page: anything that is not a real file should still open
+# the app rather than a host's 404. Applied only when no file matches, so it
+# never shadows the assets, the service worker or the manifest.
+/*  /index.html  200

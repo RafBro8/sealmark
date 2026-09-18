@@ -1,0 +1,40 @@
+name: CI
+
+# A broken build should never reach a deployment. Hosts build from the default
+# branch, so this runs on every push and pull request against it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build --workspace @sealmark/web
+
+      - name: Download size
+        run: node scripts/measure-bundle.mjs
+
+      - name: Check the built site
+        # Catches anything that only shows up in a real build: an inline script the
+        # Content-Security-Policy would block, missing security headers, a service
+        # worker that did not precache the app.
+        run: node scripts/check-deployment.mjs --dist packages/web/dist

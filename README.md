@@ -437,7 +437,7 @@ modified font from keeping a Reserved Font Name (OFL-FAQ 2.6):
 ## Development
 
 ```bash
-npm test           # vitest, 221 tests
+npm test           # vitest, 225 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -450,9 +450,40 @@ node scripts/make-icons.mjs               # regenerate the app icons from seal.s
 ```
 
 ```bash
+node scripts/check-deployment.mjs --dist packages/web/dist   # check a build
+node scripts/check-deployment.mjs https://sealmark.app       # check a live site
+node scripts/sync-host-config.mjs                            # vercel.json from _headers
+node scripts/third-party-notices.mjs                         # regenerate the notices
+```
+
+```bash
 npm run build --workspace @sealmark/web && npm run preview --workspace @sealmark/web
 # production build on :5176, under the real security headers and with the service worker
 ```
+
+---
+
+## Deploying
+
+Sealmark is a static site: `npm run build --workspace @sealmark/web` produces
+`packages/web/dist`, and any static host can serve it. There is no server, no
+database and no runtime secret — which is the privacy claim restated as
+architecture.
+
+The security headers live in `packages/web/public/_headers`, read directly by
+Cloudflare Pages and Netlify. Vercel ignores that file, so `vercel.json` is
+generated from it by `scripts/sync-host-config.mjs`, and a test fails if the two
+drift apart.
+
+`scripts/check-deployment.mjs` is the gate. Against a build directory it runs in
+CI and catches anything that only appears in a real build — an inline script the
+policy would block, a service worker that failed to precache the app. Against a
+URL it checks the host itself: that the headers actually arrive, the policy is
+intact, the manifest and icons are served, responses are compressed. A host that
+silently ignores `_headers` passes every local test and fails that one.
+
+Full checklist, DNS, rollback: **[docs/deploying.md](docs/deploying.md)**.
+Putting signing into someone else's site: **[docs/integrating.md](docs/integrating.md)**.
 
 ---
 
@@ -475,3 +506,8 @@ Sacramento, Meddon and Lato under the SIL Open Font License, and Yellowtail unde
 the Apache License 2.0. Great Vibes is shipped with its hinting instructions
 removed, which its licence permits as it reserves no font name; the unmodified
 original is in `packages/core/fonts-source/`.
+
+Everything Sealmark depends on is listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), generated from the lockfile.
+All of it is MIT, Apache-2.0, BSD or 0BSD, so Sealmark can be installed on a
+client site as paid work — provided those notices are delivered with it.

@@ -1,0 +1,155 @@
+# Integrating Sealmark into a client site
+
+Sealmark is sold as **one-off integration work**, not a subscription: document
+signing dropped into a business's own website as a feature, billed per client.
+This is how that is delivered, from the cheapest version to the full one.
+
+There are three levels. Start at the top and move down only when a client is
+paying for it.
+
+---
+
+## 1. Link to it
+
+The whole of Sealmark, for the cost of an anchor tag.
+
+```html
+<a class="button" href="https://sealmark.app" target="_blank" rel="noopener">
+  Sign a document
+</a>
+```
+
+Nothing to install, nothing to maintain, no hosting cost, and the privacy claim
+stays exactly as strong as it is on sealmark.app: the document never leaves the
+visitor's browser. This is what goes on goodlookingdigital.com, and it is a
+perfectly good answer for a client who signs the occasional form.
+
+### The GLD section
+
+A demonstration, and the reason a prospect believes the rest of the pitch.
+
+> ### Sign documents here
+>
+> Need a contract, waiver or form signed? Use our signing tool — free, and
+> genuinely private. Your document is never uploaded: it is signed inside your
+> own browser and saved straight back to your device.
+>
+> Every signed file gets a tamper-evident seal and a certificate page, so you can
+> prove later that the copy you hold is the one that was signed.
+>
+> **[Open the signing tool →](https://sealmark.app)**
+>
+> *Built by Good Looking Digital. Want signing built into your own site? [Let's
+> talk](#contact).*
+
+Two jobs at once: something useful to a visitor, and proof that this agency
+builds real software rather than assembling templates. The last line is what
+turns it into a lead.
+
+Deferred until both domains are live.
+
+---
+
+## 2. Embed it
+
+A versioned `<sealmark-sign>` custom element, one package every client shares —
+so a fix reaches all of them and nothing gets forked per client.
+
+```html
+<script type="module" src="https://cdn.sealmark.app/v1/sealmark-sign.js"></script>
+
+<sealmark-sign
+  document="/contracts/service-agreement.pdf"
+  signer-name-field="required"
+  theme="brand"
+></sealmark-sign>
+```
+
+Design constraints, decided and worth keeping:
+
+- **Loads nothing until someone signs.** The heavy parts — the PDF renderer, the
+  stamping engine, the signing fonts — stay behind a dynamic import, the same
+  split the app already uses. A client's page weight barely moves.
+- **Themed with CSS variables**, not a build flag, so it inherits the site it
+  sits in without a per-client build.
+- **Still no server.** Signing happens in the visitor's browser, which is why
+  there is no per-client hosting cost — and why neither GLD nor the client
+  carries a duty of care over documents in transit.
+- **Versioned URL.** `v1` never changes behaviour under a client's feet.
+
+One thing genuinely changes for an embedded build: the deployed
+Content-Security-Policy says `frame-ancestors 'none'`, and an embed needs the
+client's own origin allowed instead. That is a per-client header, not a code
+change — see [deploying.md](deploying.md).
+
+**Build this when the first client is paying for it, not before.**
+
+---
+
+## 3. Do something with the signed file
+
+This is the part that is actually worth money. Levels 1 and 2 hand a signed PDF
+back to the person who signed it; a business usually wants it to arrive
+somewhere:
+
+- emailed to the business when it is signed
+- posted into their CRM, booking system or practice software
+- dropped into their storage — Drive, Dropbox, S3
+- a copy emailed to the signer for their records
+
+Each of those is bespoke glue against whatever the client already runs, which is
+exactly the kind of work being sold. Alongside it: branding, field placement, and
+document templates so staff aren't uploading the same contract every time.
+
+### Say the privacy claim accurately
+
+"Your document never leaves your device" is true on sealmark.app and in a level-1
+or level-2 embed. The moment a signed file is emailed or posted onward, it isn't.
+The accurate version there:
+
+> Your document is signed in your browser and sent only to [the business] —
+> never to a third-party signing service.
+
+Still a strong claim, and still true. Get this wrong on a client site and it is
+the client who is making a false statement to their customers.
+
+---
+
+## Commercial shape
+
+Settled terms, recorded here so a quote doesn't have to be reinvented:
+
+- **One-off integration fee** per client.
+- **Optional annual maintenance** buying support and upgrades — never unlimited
+  free updates.
+- **New features are charged for.**
+- **Non-exclusive licence** per client; ownership of Sealmark stays with Good
+  Looking Digital, which is what makes selling it a second time possible.
+- Discreet **"Powered by Sealmark"** mark, with a white-label option priced
+  separately.
+
+### What must ship with every delivery
+
+`THIRD-PARTY-NOTICES.md`, regenerated by `node scripts/third-party-notices.mjs`.
+
+Every dependency Sealmark ships is MIT, Apache-2.0, BSD-3-Clause, 0BSD or
+MIT-AND-Zlib, and the signing fonts are SIL Open Font License or Apache-2.0. All
+of those permit paid installation on a client's site; all of them require their
+notices to travel with the product. That file is the compliance obligation, and
+it is generated rather than hand-written so it cannot fall behind.
+
+---
+
+## What Sealmark is not
+
+Worth saying plainly to a prospect, because it is where a deal goes wrong later:
+
+- It is **not remote signing**. Sealmark signs a document in front of the person
+  holding it. Sending a contract to a counterparty to sign in their own time is a
+  different product with a different privacy model — it needs a server, and the
+  "never leaves your browser" promise stops being true.
+- It is **not a certificate-authority signature**. Tamper evidence is a SHA-256
+  hash plus a certificate page, optionally anchored by an RFC 3161 trusted
+  timestamp. That satisfies the ESIGN Act and UETA, which is what US business
+  signing needs; it is not PAdES, and a client whose regulator demands a
+  qualified certificate needs to hear that before signing a contract, not after.
