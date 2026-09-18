@@ -46,6 +46,11 @@ export function buildVercelConfig(rules) {
     installCommand: 'npm ci',
     framework: null,
     headers: rules.map((rule) => ({ source: toSource(rule.path), headers: rule.headers })),
+    // The equivalent of _redirects, which Vercel does not read. Rewrites are
+    // checked only after a real file fails to match, so this never shadows the
+    // assets, the service worker or the manifest — it just means an unknown path
+    // opens the app rather than the host's 404 page, as on every other host.
+    rewrites: [{ source: '/(.*)', destination: '/index.html' }],
   };
 }
 

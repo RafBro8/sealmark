@@ -44,4 +44,11 @@ describe('vercel.json', () => {
     // run: node scripts/sync-host-config.mjs
     expect(read('../../vercel.json')).toBe(generate());
   });
+
+  it('falls back to the app for unknown paths, as _redirects does', () => {
+    // Vercel ignores _redirects; without this a deep link hits Vercel's 404
+    // page instead of Sealmark, and the two hosts disagree.
+    const config = JSON.parse(generate());
+    expect(config.rewrites).toContainEqual({ source: '/(.*)', destination: '/index.html' });
+  });
 });
