@@ -92,7 +92,8 @@ lines.push('', '## Fonts', '', '| Font | Licence | Notes |', '| --- | --- | --- 
 for (const file of fontLicences) {
   const font = file.replace(/-(OFL|LICENSE)\.txt$/, '');
   const apache = file.endsWith('LICENSE.txt');
-  const note = font === 'GreatVibes' ? 'Hinting removed; reserves no font name. Unmodified original in packages/core/fonts-source/' : 'Shipped as published';
+  // Nothing is modified any more, so every font keeps its name cleanly.
+  const note = 'Shipped as published';
   lines.push(`| ${font} | ${apache ? 'Apache-2.0' : 'SIL Open Font License 1.1'} | ${note} |`);
 }
 lines.push('', 'The full text of each font licence is in `packages/core/assets/`.', '');

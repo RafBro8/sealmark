@@ -98,8 +98,8 @@ a changed build to a page running the saved one: the notice appeared, the page k
 running the old version, and Reload switched it.
 
 **What this costs.** The page itself still becomes usable after 66 KB. The service
-worker then saves the rest in the background — 28 files, 1.8 MB gzipped or about
-1.5 MB with Brotli — which is what makes offline use possible. `_headers` tells
+worker then saves the rest in the background — 30 files, about 1.9 MB gzipped or
+1.6 MB with Brotli — which is what makes offline use possible. `_headers` tells
 hosts to re-check `sw.js`, `index.html` and the manifest on every visit, so a
 published update reaches people instead of sitting behind a long cache.
 
@@ -429,29 +429,31 @@ appears. A second test fails if any module the web app loads with the page impor
 signing, conversion, timestamps, verification or pdf.js directly rather than on
 demand.
 
-**Fonts** total 675 KB gzipped, or about 510 KB where the host serves Brotli, as
-the deployed site does. They were considered for trimming one at a time,
-because the SIL Open Font License counts trimming as a modification and forbids a
-modified font from keeping a Reserved Font Name (OFL-FAQ 2.6):
+**Fonts** are the bulk of the download, and every one of them ships exactly as
+published. Great Vibes used to be trimmed — its hinting instructions removed,
+447 KB down to 281 KB, which the SIL Open Font License permits because it reserves
+no font name. That trimming is gone, and the reason is worth keeping:
 
-- **Great Vibes** reserves no name, so its hinting instructions — which tune
-  rendering on low-resolution screens and which PDFs ignore — are removed:
-  447 KB to 281 KB. It keeps every character and every outline, and a test compares
-  it glyph by glyph with the untouched source in `packages/core/fonts-source/`.
-  `node scripts/trim-fonts.mjs` regenerates it.
-- **Lato, Parisienne, Sacramento and Meddon** reserve their names and ship exactly
-  as published.
-- **WOFF2** would have been the lawful alternative — conversion without changing
-  font data is not a modification (OFL-FAQ 2.2.1) — and was checked to be lossless,
-  but pdf-lib's font subsetter fails on WOFF2 input, and Brotli already brings TTF
-  within about 60 KB of it.
+> A pre-subsetted font embeds badly. pdf-lib subsets a font again when it puts it
+> in a PDF, and subsetting the already-subsetted Great Vibes produced a font whose
+> outlines were mostly **empty**. Signing as "Rafal Brodowicz" drew `R a a r d w`
+> and left `f l B o o i c z` blank. The trimmed font itself was perfectly valid —
+> it rendered correctly in CSS, and a test compared it with the original glyph by
+> glyph and found no difference. The damage only appeared one stage later, when it
+> was embedded.
+
+`fonts.test.ts` now subsets every shipped font the way pdf-lib does and fails if
+any letter loses its outline, which is the check that was missing. **WOFF2** would
+be lawful — conversion without changing font data is not a modification
+(OFL-FAQ 2.2.1) — and is lossless, but pdf-lib's subsetter cannot read it, and
+Brotli already brings TTF within about 60 KB.
 
 ---
 
 ## Development
 
 ```bash
-npm test           # vitest, 226 tests
+npm test           # vitest, 231 tests
 npm run typecheck  # tsc --noEmit across workspaces
 npm run build      # production build of the web app
 ```
@@ -459,7 +461,6 @@ npm run build      # production build of the web app
 ```bash
 npx tsx scripts/dump-text.ts <file.pdf>   # inspect the text layer and positions
 node scripts/measure-bundle.mjs           # first-visit and on-demand sizes, after a build
-node scripts/trim-fonts.mjs               # regenerate trimmed fonts from fonts-source/
 node scripts/make-icons.mjs               # regenerate the app icons from seal.svg
 ```
 

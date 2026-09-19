@@ -33,7 +33,7 @@ Sealmark, including integrations installed on a client site.
 
 | Font | Licence | Notes |
 | --- | --- | --- |
-| GreatVibes | SIL Open Font License 1.1 | Hinting removed; reserves no font name. Unmodified original in packages/core/fonts-source/ |
+| GreatVibes | SIL Open Font License 1.1 | Shipped as published |
 | Lato | SIL Open Font License 1.1 | Shipped as published |
 | Meddon | SIL Open Font License 1.1 | Shipped as published |
 | Parisienne | SIL Open Font License 1.1 | Shipped as published |
