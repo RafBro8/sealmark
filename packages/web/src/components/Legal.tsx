@@ -12,8 +12,13 @@ import { TIMESTAMP_ENDPOINT } from '@sealmark/core/light';
 const EFFECTIVE = '18 September 2026';
 const REPO = 'https://github.com/RafBro8/sealmark';
 
-/** Set this before launch; the contact line is left out entirely until it is. */
-const CONTACT_EMAIL: string | null = null;
+/**
+ * Where privacy questions go. The same address the Good Looking Digital site
+ * publishes, on a domain with working mail — a policy page pointing at a mailbox
+ * nobody reads is worse than one with no address at all. Setting this to null
+ * falls back to the public issue tracker.
+ */
+const CONTACT_EMAIL: string | null = 'hello@goodlookingdigital.com';
 
 export function Legal({ onClose }: { onClose: () => void }) {
   const host = new URL(TIMESTAMP_ENDPOINT).host;
@@ -191,7 +196,8 @@ export function Legal({ onClose }: { onClose: () => void }) {
           </p>
           {CONTACT_EMAIL ? (
             <p>
-              Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+              Questions about any of this, including a request to explain how a document you signed
+              was handled: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
             </p>
           ) : (
             <p>
