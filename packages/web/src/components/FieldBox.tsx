@@ -42,8 +42,16 @@ export function FieldBox({ field, geometry, displayText, scriptFamily, onChange,
     if ((event.target as HTMLElement).closest('.field-remove')) return;
     event.preventDefault();
     event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { mode, startX: event.clientX, startY: event.clientY, origin: box };
+    // Capture keeps the drag alive when a finger or cursor slips off the field.
+    // Start the drag first and let capture fail quietly: a browser that refuses
+    // it leaves dragging working while the pointer stays on the field, which is
+    // far better than a field that will not move at all.
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* dragging continues without capture */
+    }
   };
 
   const move = (event: ReactPointerEvent<HTMLElement>) => {
@@ -69,7 +77,11 @@ export function FieldBox({ field, geometry, displayText, scriptFamily, onChange,
   const end = (event: ReactPointerEvent<HTMLElement>) => {
     if (!drag.current) return;
     drag.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      /* nothing was captured */
+    }
   };
 
   /** Arrow keys nudge; holding shift moves a larger step. */
