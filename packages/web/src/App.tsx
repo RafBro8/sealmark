@@ -473,6 +473,9 @@ export function App() {
           <a className="link" href="https://github.com/RafBro8/sealmark" target="_blank" rel="noopener noreferrer">
             Source
           </a>
+          <a className="link footer-credit" href="https://goodlookingdigital.com" target="_blank" rel="noopener noreferrer">
+            <span className="footer-credit-lead">Designed &amp; Built by </span>Good Looking Digital
+          </a>
         </footer>
       )}
     </div>

@@ -1045,3 +1045,12 @@ button, input { font: inherit; color: inherit; }
   /* Up and out, clear of the drag surface beneath it. */
   .field-remove::after { top: -13px; right: -13px; bottom: 0; left: -11px; }
 }
+
+/* The bar is a fixed 38px, so the credit has to stay on one line. Below the
+   same 640px breakpoint the claim above drops at, it keeps the name and loses
+   the lead-in rather than wrapping into a row that cannot hold two lines. */
+.footer-credit { white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .footer-credit-lead { display: none; }
+}
