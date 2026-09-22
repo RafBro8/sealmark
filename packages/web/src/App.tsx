@@ -104,7 +104,7 @@ export function App() {
   const pagesRef = useRef<HTMLDivElement>(null);
 
   // Load the chosen face as soon as there is a document to place it on, so
-  // fields do not flash in a fallback font — but not before: the intake screen
+  // fields do not flash in a fallback font - but not before: the intake screen
   // never draws a signature, and the font is the heaviest thing it would fetch.
   const hasDocument = doc !== null;
   useEffect(() => {

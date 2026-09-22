@@ -12,8 +12,8 @@ const load = (file: string) =>
  * and reports the characters whose outline did not survive.
  *
  * This is the stage that matters and the stage nothing used to check. A font can
- * be perfectly valid on its own — render correctly in CSS, pass every check made
- * against the whole file — and still produce blank glyphs once it has been
+ * be perfectly valid on its own - render correctly in CSS, pass every check made
+ * against the whole file - and still produce blank glyphs once it has been
  * subsetted into a PDF. Great Vibes did exactly that for months: it was shipped
  * pre-subsetted by a build script, and subsetting it a second time to embed it
  * emptied most of its outlines. Signatures came out as a letter here and there.

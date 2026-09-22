@@ -10,7 +10,7 @@ function sourceAdvice(audit: AuditRecord): string {
   const plural = source.files.length === 1 ? 'the original file' : 'the original files';
 
   if (source.relation === 'declared') {
-    return `Keep ${source.files[0]?.name ?? 'the original'} too. Its fingerprint is in the record, so it can be matched later — recorded as your declaration, since the PDF was exported outside Sealmark.`;
+    return `Keep ${source.files[0]?.name ?? 'the original'} too. Its fingerprint is in the record, so it can be matched later - recorded as your declaration, since the PDF was exported outside Sealmark.`;
   }
   if (source.files.some((file) => file.reencoded)) {
     return `Keep ${plural} too. Their fingerprints are in the record, so they can be matched to this document later.`;

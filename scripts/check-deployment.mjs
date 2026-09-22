@@ -75,7 +75,7 @@ async function checkLive(base) {
 
   for (const header of REQUIRED_HEADERS) {
     if (index.headers.get(header)) pass(`sends ${header}`);
-    else fail(`sends ${header}`, 'header absent — is the host reading _headers or vercel.json?');
+    else fail(`sends ${header}`, 'header absent - is the host reading _headers or vercel.json?');
   }
 
   const csp = index.headers.get('content-security-policy') ?? '';
@@ -133,7 +133,7 @@ function checkDist(dir) {
   const read = (name) => readFileSync(join(dir, name), 'utf8');
   const has = (name) => existsSync(join(dir, name));
 
-  if (!has('index.html')) return fail('build output exists', `${dir}/index.html not found — run the build first`);
+  if (!has('index.html')) return fail('build output exists', `${dir}/index.html not found - run the build first`);
   pass('build output exists');
 
   checkIndexHtml(read('index.html'));
@@ -154,7 +154,7 @@ function checkDist(dir) {
 
   for (const icon of ['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png']) {
     if (has(icon)) pass(`build includes ${icon}`);
-    else fail(`build includes ${icon}`, 'missing — run node scripts/make-icons.mjs');
+    else fail(`build includes ${icon}`, 'missing - run node scripts/make-icons.mjs');
   }
 
   if (has('_headers')) {
@@ -191,7 +191,7 @@ if (process.argv[2] === '--dist') {
 
 for (const result of results) {
   const label = result.warning ? ' note ' : result.ok ? '  ok  ' : ' FAIL ';
-  const detail = result.ok && !result.warning ? '' : ` — ${result.detail}`;
+  const detail = result.ok && !result.warning ? '' : ` - ${result.detail}`;
   console.log(`${label} ${result.what}${detail}`);
 }
 const failures = results.filter((result) => !result.ok).length;

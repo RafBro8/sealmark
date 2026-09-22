@@ -2,7 +2,7 @@
  * Writes THIRD-PARTY-NOTICES.md from the packages actually installed.
  *
  * Sealmark is sold as paid integration work, and every library it ships is MIT,
- * Apache-2.0 or BSD — all of which allow that, provided their notices travel with
+ * Apache-2.0 or BSD - all of which allow that, provided their notices travel with
  * the product. Generated rather than hand-written so it cannot fall behind the
  * dependencies.
  *
@@ -78,7 +78,7 @@ const details = [];
 for (const [name, version] of packages) {
   const info = licenceFor(name);
   // A shipped package must never drop out of the notices quietly.
-  if (!info) throw new Error(`${name} is a runtime dependency but is not installed — run npm install`);
+  if (!info) throw new Error(`${name} is a runtime dependency but is not installed - run npm install`);
   lines.push(`| ${name} | ${version} | ${info.licence} |`);
   if (info.text) {
     details.push(`### ${name} ${version}\n\n${info.homepage ? `${info.homepage}\n\n` : ''}\`\`\`\n${info.text}\n\`\`\``);

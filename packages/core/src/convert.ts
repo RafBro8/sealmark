@@ -20,7 +20,7 @@ export type { ConvertibleImageType } from './sniff.js';
  *
  * Both converters are deterministic: the same input always yields byte-identical
  * output. That is what lets the audit record link a signed PDF back to the photo
- * it came from in a way a third party can check — convert the photo again, and
+ * it came from in a way a third party can check - convert the photo again, and
  * the hash matches.
  */
 
@@ -49,7 +49,7 @@ export interface ImageToPdfOptions {
 
 /**
  * One page per image, in the order given. Each page takes the orientation of
- * its image — a landscape photo gets a landscape page — and the image is scaled
+ * its image - a landscape photo gets a landscape page - and the image is scaled
  * to fit inside the margin without cropping or distortion.
  */
 export async function imagesToPdf(

@@ -3,10 +3,10 @@
 Tamper-evident electronic signatures for PDFs, photos of paper documents, and text files.
 
 Sealmark stamps a signature onto a document and produces a record that proves
-**what was signed**, **that the signed file has not changed since**, and — when the
-document started life as photos or a text file — **what it was made from**. Alter
-one byte of a sealed document — a digit in a price, a word in a clause, a scrap of
-metadata — and verification fails.
+**what was signed**, **that the signed file has not changed since**, and - when the
+document started life as photos or a text file - **what it was made from**. Alter
+one byte of a sealed document - a digit in a price, a word in a clause, a scrap of
+metadata - and verification fails.
 
 > **Status:** Signing, verification in the browser and on the command line,
 > in-browser document conversion, signature styles, trusted timestamps, a 66 KB
@@ -26,7 +26,7 @@ Signing produces two files:
 
 `sealmark verify` recomputes the hash of the PDF and compares it to the record.
 Because SHA-256 is collision-resistant, any modification produces a different
-digest, and the check fails. The record is the evidence — keep it with the
+digest, and the check fails. The record is the evidence - keep it with the
 document.
 
 Signing is **reproducible**: identical inputs at an identical timestamp produce
@@ -36,11 +36,11 @@ than taking the record's word for it.
 ### What this is, and what it is not
 
 This is a hash-based integrity and audit system, which is what the US ESIGN Act
-and UETA actually require of an electronic signature — intent to sign, association
+and UETA actually require of an electronic signature - intent to sign, association
 of the signature with the record, and retention of the record. It is deliberately
 **not** a PAdES cryptographic signature: there is no certificate authority, no
 signing certificate, and no green tick in Adobe Reader. Those require a purchased
-certificate and solve a different problem — proving *organisational identity*
+certificate and solve a different problem - proving *organisational identity*
 rather than *document integrity*.
 
 Optionally, a record also carries an RFC 3161 trusted timestamp from DigiCert,
@@ -66,7 +66,7 @@ The on-page preview uses the same font and the same fitting rules as the stamped
 output, so what you place is what you get.
 
 Nothing is uploaded. The document is read through a file picker, processed in the
-page, and written back out as a download — open the Network tab while you sign
+page, and written back out as a download - open the Network tab while you sign
 and you will see only the app's own assets load.
 
 In production the `connect-src 'self'` rule in
@@ -78,8 +78,8 @@ arrives on every response, verified against the live host by
 ## Offline, and installable
 
 After one visit Sealmark works with no connection, and it can be installed from
-the browser — **Install Sealmark** in Chrome and Edge, **Add to Home Screen** on a
-phone — to open in its own window like any other app.
+the browser - **Install Sealmark** in Chrome and Edge, **Add to Home Screen** on a
+phone - to open in its own window like any other app.
 
 A service worker keeps a copy of every file the app can load, including the code
 and fonts that normally arrive on demand, so opening a document, choosing any
@@ -98,8 +98,8 @@ a changed build to a page running the saved one: the notice appeared, the page k
 running the old version, and Reload switched it.
 
 **What this costs.** The page itself still becomes usable after 66 KB. The service
-worker then saves the rest in the background — 30 files, about 1.9 MB gzipped or
-1.6 MB with Brotli — which is what makes offline use possible. `_headers` tells
+worker then saves the rest in the background - 30 files, about 1.9 MB gzipped or
+1.6 MB with Brotli - which is what makes offline use possible. `_headers` tells
 hosts to re-check `sw.js`, `index.html` and the manifest on every visit, so a
 published update reaches people instead of sitting behind a long cache.
 
@@ -117,14 +117,14 @@ signature proves and what it does not.
 The page names the timestamp host by importing the same constant the signing code
 calls, so it cannot drift into describing a service the app does not use, and a
 test asserts that host is the one the Content-Security-Policy allows. Its text is
-loaded on demand — nobody opens Sealmark to read a policy — and precached with
+loaded on demand - nobody opens Sealmark to read a policy - and precached with
 everything else, so it works offline.
 
 ## Verifying a signed document
 
 Switch the header to **Verify** and drop in the signed PDF with its
 `.sealmark.json` record. Add the unsigned original, or the photos, text or Word file
-the document came from, and those are checked too — in the tab, like signing.
+the document came from, and those are checked too - in the tab, like signing.
 
 | Result | Meaning |
 | --- | --- |
@@ -147,7 +147,7 @@ claimed signing time disagrees with its timestamp is flagged.
 ## Trusted timestamps
 
 Turn on **Add a trusted timestamp** before signing, or pass `--timestamp` on the
-command line. Sealmark sends the signed PDF's SHA-256 — only that — to a timestamp
+command line. Sealmark sends the signed PDF's SHA-256 - only that - to a timestamp
 authority, and stores the signed reply in the record.
 
 ```
@@ -158,7 +158,7 @@ time      DigiCert SHA256 RSA4096 Timestamp Responder 2026 1 confirms the signed
 computer said. With one, an independent authority has signed a statement that this
 exact file existed at that moment. A forger can edit a PDF and write a new record,
 but cannot get an authority to sign a timestamp for a date in the past. Verification also flags a
-record whose claimed signing time disagrees with its timestamp — exactly what a
+record whose claimed signing time disagrees with its timestamp - exactly what a
 backdated record looks like:
 
 ```
@@ -181,7 +181,7 @@ published value and the Windows trust store. Trust is an explicit, reviewable
 decision in one file rather than whatever a machine happens to trust.
 
 **Why a relay.** A browser may only call a server that allows it, and of eight
-public timestamp authorities tested, none did — except `rfc3161.ai.moda`, a free
+public timestamp authorities tested, none did - except `rfc3161.ai.moda`, a free
 relay that forwards to established authorities. Sampled over 40 requests it used
 DigiCert 38 times and Sectigo twice, so both are pinned. Should it route a request
 to an authority Sealmark does not trust, Sealmark asks again, up to three times,
@@ -198,7 +198,7 @@ verify it without Sealmark:
 openssl ts -verify -in token.der -token_in -data contract.signed.pdf -CAfile DigiCertTrustedRootG4.pem
 ```
 
-**When it cannot be reached** — offline, or the relay is down — signing still
+**When it cannot be reached** - offline, or the relay is down - signing still
 completes, and the result says so plainly with a **Try again** button. On the
 command line, `sealmark timestamp <record>` adds one later. A timestamp added later
 proves the document existed by then rather than when it was signed, and the output
@@ -222,11 +222,11 @@ two clicks.
 
 The record names every source file with its SHA-256, and distinguishes two cases:
 
-- **Converted** — Sealmark made the PDF. Conversion is deterministic, so anyone
+- **Converted** - Sealmark made the PDF. Conversion is deterministic, so anyone
   holding the original photos can convert them again and get byte-for-byte the PDF
   that was signed. `sealmark verify --source` does exactly that, and the browser and
   Node produce identical output from the same files.
-- **Declared** — you exported the PDF from Word and told Sealmark which `.docx` it
+- **Declared** - you exported the PDF from Word and told Sealmark which `.docx` it
   came from. Its fingerprint is recorded so it can be matched later, but the record
   and the certificate both say this is your declaration, because Sealmark did not
   perform the export.
@@ -261,7 +261,7 @@ cannot write, that style is greyed out with the reason rather than failing at th
 moment of signing.
 
 Faces differ in proportion: in the same box Quill's tall loops stamp noticeably
-smaller than Classic. The preview shows this before signing — make the field taller
+smaller than Classic. The preview shows this before signing - make the field taller
 for a larger Quill signature.
 
 ### Any language a name comes in
@@ -349,7 +349,7 @@ npx tsx packages/cli/src/index.ts inspect fixtures/out/agreement.signed.sealmark
 ## Field placement
 
 Fields are positioned in PDF points, with the origin at the **bottom-left** of the
-page — the PDF spec's own coordinate system. Pages are 1-based on the command
+page - the PDF spec's own coordinate system. Pages are 1-based on the command
 line because that is how a person reads a document.
 
 ```
@@ -381,7 +381,7 @@ scripts/         Development aids (fixture generation, PDF text dumping).
 ```
 
 The core is isomorphic on purpose, and the browser app imports the same
-`signDocument` it does — no parallel implementation, no drift. A document signed
+`signDocument` it does - no parallel implementation, no drift. A document signed
 in the browser and the same document signed by the CLI produce identical hashes.
 
 Two details that are easy to get wrong and are therefore covered by tests:
@@ -410,7 +410,7 @@ other host is blocked by the browser, and the timestamp request goes through.
 
 ### Download size
 
-A first visit downloads **66 KB** of gzipped code — the app shell and the intake
+A first visit downloads **66 KB** of gzipped code - the app shell and the intake
 screen. Everything else arrives when it is first needed:
 
 | When | What loads |
@@ -430,22 +430,22 @@ signing, conversion, timestamps, verification or pdf.js directly rather than on
 demand.
 
 **Fonts** are the bulk of the download, and every one of them ships exactly as
-published. Great Vibes used to be trimmed — its hinting instructions removed,
+published. Great Vibes used to be trimmed - its hinting instructions removed,
 447 KB down to 281 KB, which the SIL Open Font License permits because it reserves
 no font name. That trimming is gone, and the reason is worth keeping:
 
 > A pre-subsetted font embeds badly. pdf-lib subsets a font again when it puts it
 > in a PDF, and subsetting the already-subsetted Great Vibes produced a font whose
 > outlines were mostly **empty**. Signing as "Rafal Brodowicz" drew `R a a r d w`
-> and left `f l B o o i c z` blank. The trimmed font itself was perfectly valid —
+> and left `f l B o o i c z` blank. The trimmed font itself was perfectly valid -
 > it rendered correctly in CSS, and a test compared it with the original glyph by
 > glyph and found no difference. The damage only appeared one stage later, when it
 > was embedded.
 
 `fonts.test.ts` now subsets every shipped font the way pdf-lib does and fails if
 any letter loses its outline, which is the check that was missing. **WOFF2** would
-be lawful — conversion without changing font data is not a modification
-(OFL-FAQ 2.2.1) — and is lossless, but pdf-lib's subsetter cannot read it, and
+be lawful - conversion without changing font data is not a modification
+(OFL-FAQ 2.2.1) - and is lossless, but pdf-lib's subsetter cannot read it, and
 Brotli already brings TTF within about 60 KB.
 
 ---
@@ -482,7 +482,7 @@ npm run build --workspace @sealmark/web && npm run preview --workspace @sealmark
 
 Sealmark is a static site: `npm run build --workspace @sealmark/web` produces
 `packages/web/dist`, and any static host can serve it. There is no server, no
-database and no runtime secret — which is the privacy claim restated as
+database and no runtime secret - which is the privacy claim restated as
 architecture.
 
 It is deployed on Vercel at
@@ -494,7 +494,7 @@ that file nor `_redirects`, so `vercel.json` is generated from them by
 `scripts/sync-host-config.mjs`, and a test fails if the two drift apart.
 
 `scripts/check-deployment.mjs` is the gate. Against a build directory it runs in
-CI and catches anything that only appears in a real build — an inline script the
+CI and catches anything that only appears in a real build - an inline script the
 policy would block, a service worker that failed to precache the app. Against a
 URL it checks the host itself: that the headers actually arrive, the policy is
 intact, the manifest and icons are served, responses are compressed. A host that
@@ -507,12 +507,12 @@ Putting signing into someone else's site: **[docs/integrating.md](docs/integrati
 
 ## Roadmap
 
-1. **Core engine and CLI** — signing, hashing, certificate, verification. *Complete.*
-2. **Browser interface** — render the PDF, click to place fields, live preview, download. *Complete.*
-3. **Document conversion** — photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** — RFC 3161 trusted timestamps, a 66 KB first visit, offline use and installation. *Complete.*
-5. **Signature styles** — five signature faces to sign in, each previewed with the signer's own name. *Complete.*
-6. **Remote signing** — send a document to a counterparty to sign. Separate product, separate privacy model.
+1. **Core engine and CLI** - signing, hashing, certificate, verification. *Complete.*
+2. **Browser interface** - render the PDF, click to place fields, live preview, download. *Complete.*
+3. **Document conversion** - photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
+4. **Evidence hardening** - RFC 3161 trusted timestamps, a 66 KB first visit, offline use and installation. *Complete.*
+5. **Signature styles** - five signature faces to sign in, each previewed with the signer's own name. *Complete.*
+6. **Remote signing** - send a document to a counterparty to sign. Separate product, separate privacy model.
 
 ---
 
@@ -528,4 +528,4 @@ original is in `packages/core/fonts-source/`.
 Everything Sealmark depends on is listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), generated from the lockfile.
 All of it is MIT, Apache-2.0, BSD or 0BSD, so Sealmark can be installed on a
-client site as paid work — provided those notices are delivered with it.
+client site as paid work - provided those notices are delivered with it.

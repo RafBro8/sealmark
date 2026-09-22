@@ -1032,7 +1032,7 @@ button, input { font: inherit; color: inherit; }
    of the document being signed, and anything larger would cover the text. On a
    touchscreen that leaves an 11px and a 17px target, well under the ~44px a
    finger needs. So the hit area is grown without changing what is drawn, and it
-   grows outwards — away from the field body — so it cannot swallow a drag that
+   grows outwards - away from the field body - so it cannot swallow a drag that
    was meant to move the field. */
 @media (pointer: coarse) {
   .field-handle::after,

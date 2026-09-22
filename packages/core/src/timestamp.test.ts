@@ -56,7 +56,7 @@ interface Authority {
 
 /**
  * A self-made certificate that can sign timestamps. With `timestamping: false`
- * it lacks the timestamping purpose — the forgery a trusted-root check alone
+ * it lacks the timestamping purpose - the forgery a trusted-root check alone
  * would not stop.
  */
 async function makeAuthority(name: string, { timestamping }: { timestamping: boolean }): Promise<Authority> {
@@ -272,7 +272,7 @@ describe('checkTimestampToken, against forgeries', () => {
     expect(await checkTimestampToken(forged.token, real.sha256)).toMatchObject({ valid: false, reason: 'untrusted' });
   });
 
-  it('would accept that same forgery only if its maker were trusted — so the pinned roots are the gate', async () => {
+  it('would accept that same forgery only if its maker were trusted - so the pinned roots are the gate', async () => {
     const forged = await forgeToken(real.sha256, { timestamping: true });
     expect(await checkTimestampToken(forged.token, real.sha256, { roots: [forged.root] })).toMatchObject({
       valid: true,

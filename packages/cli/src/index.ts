@@ -93,7 +93,7 @@ async function prepare(paths: string[], pageSize: PageSize, textFontPath: string
     case 'office':
       return fail(
         [
-          `${plan.file.name} needs exporting to PDF first — Sealmark does not convert office documents,`,
+          `${plan.file.name} needs exporting to PDF first - Sealmark does not convert office documents,`,
           '       because no converter it could run on your machine reproduces the layout faithfully.',
           '       Export it from the app that made it (Word: File > Save As > PDF), then sign the PDF and',
           '       record the original alongside it:',

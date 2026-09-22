@@ -3,7 +3,7 @@ import { sha256Hex, sha256Text, formatHash } from './hash.js';
 
 describe('sha256', () => {
   it('matches the published digest for "abc"', async () => {
-    // FIPS 180-4 test vector — proves we are computing real SHA-256.
+    // FIPS 180-4 test vector - proves we are computing real SHA-256.
     await expect(sha256Text('abc')).resolves.toBe(
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
     );

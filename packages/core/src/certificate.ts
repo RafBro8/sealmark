@@ -171,7 +171,7 @@ function sourceHeading(source: SourceRecord): string {
  * of. The signed document's own hash lives in the accompanying record file,
  * which is what `verifyDocument` checks against.
  *
- * `textFont` must be the embedded Unicode font — names, filenames and field
+ * `textFont` must be the embedded Unicode font - names, filenames and field
  * values all pass through it.
  */
 export async function appendCertificate(
@@ -213,7 +213,7 @@ export async function appendCertificate(
 
   layout.heading(`Audit trail (${data.events.length} events at time of sealing)`);
   for (const event of data.events) {
-    layout.row(event.at.replace('T', ' ').replace('Z', ''), `${event.type} — ${event.detail}`);
+    layout.row(event.at.replace('T', ' ').replace('Z', ''), `${event.type} - ${event.detail}`);
   }
 
   if (data.source?.relation === 'declared') {
@@ -225,6 +225,6 @@ export async function appendCertificate(
 
   layout.gap(10);
   layout.note(
-    `This certificate records the document as it was received and signed. Events that occur after this certificate is built — appending it, and sealing the file — are recorded in ${data.recordFileName}, which also holds the SHA-256 of the finished document. Verify the signed file against that record: any change to a single byte produces a different hash and fails verification.`,
+    `This certificate records the document as it was received and signed. Events that occur after this certificate is built - appending it, and sealing the file - are recorded in ${data.recordFileName}, which also holds the SHA-256 of the finished document. Verify the signed file against that record: any change to a single byte produces a different hash and fails verification.`,
   );
 }

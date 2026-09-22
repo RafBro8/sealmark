@@ -3,8 +3,8 @@ import type { PageSize, SourceFileInput, SourceInput } from '@sealmark/core';
 import { textFontBytes } from './font.js';
 
 /**
- * Turns whatever someone drops in — a PDF, photos of a paper contract, a text
- * file — into a PDF ready to sign, entirely in this tab.
+ * Turns whatever someone drops in - a PDF, photos of a paper contract, a text
+ * file - into a PDF ready to sign, entirely in this tab.
  */
 
 export type Prepared =

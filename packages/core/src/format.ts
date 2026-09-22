@@ -14,7 +14,7 @@ export function formatBytes(size: number): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** "3 minutes", "5 hours", "199 days" — a gap between two times, for people. */
+/** "3 minutes", "5 hours", "199 days" - a gap between two times, for people. */
 export function describeDuration(ms: number): string {
   const minutes = Math.round(Math.abs(ms) / 60000);
   const hours = Math.round(minutes / 60);

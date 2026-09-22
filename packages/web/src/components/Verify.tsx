@@ -118,7 +118,7 @@ export function Verify() {
         !assigned.record && assigned.pdfs.length === 0
           ? 'Add the signed PDF and its record file.'
           : !assigned.record
-            ? 'Now add the record file — the .sealmark.json saved when the document was signed. The PDF alone cannot prove it is unchanged.'
+            ? 'Now add the record file - the .sealmark.json saved when the document was signed. The PDF alone cannot prove it is unchanged.'
             : 'Now add the signed PDF.',
       );
       return;
@@ -307,7 +307,7 @@ export function Verify() {
 
             <p className="verify-limits">
               <strong>What this proves:</strong> the PDF is byte-for-byte the document this record describes. It
-              cannot prove the record itself is genuine — someone who changes a PDF could also write a new record
+              cannot prove the record itself is genuine - someone who changes a PDF could also write a new record
               for it.{' '}
               {report.timestamp?.present && report.timestamp.valid
                 ? 'The trusted timestamp narrows that: such a record would carry a timestamp from when it was forged, not from the original signing.'

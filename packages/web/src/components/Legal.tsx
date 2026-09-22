@@ -6,7 +6,7 @@ import { TIMESTAMP_ENDPOINT } from '@sealmark/core/light';
  * The timestamp host is read from the same constant the signing code uses, so
  * this page cannot end up naming a service the app does not actually contact.
  * Everything here is meant to be checkable by the reader rather than taken on
- * trust — which is the only kind of privacy claim worth making.
+ * trust - which is the only kind of privacy claim worth making.
  */
 
 const EFFECTIVE = '18 September 2026';
@@ -14,7 +14,7 @@ const REPO = 'https://github.com/RafBro8/sealmark';
 
 /**
  * Where privacy questions go. The same address the Good Looking Digital site
- * publishes, on a domain with working mail — a policy page pointing at a mailbox
+ * publishes, on a domain with working mail - a policy page pointing at a mailbox
  * nobody reads is worse than one with no address at all. Setting this to null
  * falls back to the public issue tracker.
  */
@@ -62,7 +62,7 @@ export function Legal({ onClose }: { onClose: () => void }) {
           <h2>The one request that can leave your browser</h2>
           <p>
             If you switch on <strong>Add a trusted timestamp</strong>, Sealmark sends the SHA-256
-            fingerprint of your signed file — 32 bytes, in a request of about 67 bytes — to{' '}
+            fingerprint of your signed file - 32 bytes, in a request of about 67 bytes - to{' '}
             <span className="mono">{host}</span>, which relays it to a timestamp authority
             (DigiCert, sometimes Sectigo). The authority signs a statement that a file with that
             fingerprint existed at that moment, and that reply is stored in your record.
@@ -90,10 +90,10 @@ export function Legal({ onClose }: { onClose: () => void }) {
               Every response from this site carries a Content-Security-Policy that permits
               connections only to this site and to <span className="mono">{host}</span>. Your
               browser enforces it. Even a bug in our code, or a compromised library, could not send
-              your document somewhere else — the browser would refuse the connection.
+              your document somewhere else - the browser would refuse the connection.
             </li>
             <li>
-              Go offline — aeroplane mode, or unplug — and sign a document anyway. It works, because
+              Go offline - aeroplane mode, or unplug - and sign a document anyway. It works, because
               nothing needed a network in the first place.
             </li>
             <li>
@@ -127,7 +127,7 @@ export function Legal({ onClose }: { onClose: () => void }) {
         <section>
           <h2>The name and email you type in</h2>
           <p>
-            They are stamped into the PDF and written into the audit record — the files you
+            They are stamped into the PDF and written into the audit record - the files you
             download. Email is optional. Neither is transmitted anywhere; they exist only in your
             copy of the document.
           </p>
@@ -136,8 +136,8 @@ export function Legal({ onClose }: { onClose: () => void }) {
         <section>
           <h2>Visiting this site</h2>
           <p>
-            The files that make up Sealmark are served by a hosting provider, which — like any web
-            host — records ordinary request information such as the network address, the time and
+            The files that make up Sealmark are served by a hosting provider, which - like any web
+            host - records ordinary request information such as the network address, the time and
             which file was requested, in order to serve the site and protect it from abuse. That is
             about loading a web page. Your documents are not part of it, because they never reach
             the host.
@@ -153,14 +153,14 @@ export function Legal({ onClose }: { onClose: () => void }) {
           <p>
             Sealmark produces <em>tamper evidence</em>: a cryptographic fingerprint of the signed
             file, an audit record, and a certificate page. Change one byte of a signed document and
-            verification fails. This is the kind of evidence the US ESIGN Act and UETA ask for —
+            verification fails. This is the kind of evidence the US ESIGN Act and UETA ask for -
             intent to sign, association of the signature with the record, and retention of the
             record.
           </p>
           <p>
             It is deliberately not a certificate-authority signature (PAdES), and there is no green
             tick in Adobe Reader. A matching record proves the document has not changed{' '}
-            <em>relative to that record</em>. It does not by itself prove the record is genuine —
+            <em>relative to that record</em>. It does not by itself prove the record is genuine -
             someone could edit a document and write a fresh record for it. A trusted timestamp
             narrows that gap considerably, because nobody can obtain a timestamp dated in the past.
           </p>
@@ -176,7 +176,7 @@ export function Legal({ onClose }: { onClose: () => void }) {
           <h3>Keep your own records</h3>
           <p>
             You hold the only copy. Nothing is stored for you, so nothing can be recovered for you.
-            Keep the <span className="mono">.sealmark.json</span> record alongside the signed PDF —
+            Keep the <span className="mono">.sealmark.json</span> record alongside the signed PDF -
             the record is the evidence, and without it later verification is much weaker.
           </p>
 

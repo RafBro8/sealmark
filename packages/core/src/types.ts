@@ -99,7 +99,7 @@ export interface SignOptions {
   signatureStyle?: SignatureStyleId;
   /**
    * TrueType/OpenType bytes for plain text: date and text fields and the
-   * certificate page. Must cover the characters people actually use in names —
+   * certificate page. Must cover the characters people actually use in names -
    * PDF's built-in fonts cannot encode "ł", so a Polish signer could not sign.
    */
   textFont: Uint8Array;
@@ -152,9 +152,9 @@ export interface AuditRecord {
   documentName: string;
   signer: Signer;
   signedAt: string;
-  /** SHA-256 of the input document — proves *what* was signed. */
+  /** SHA-256 of the input document - proves *what* was signed. */
   originalHash: string;
-  /** SHA-256 of the output PDF — proves it has not changed since. */
+  /** SHA-256 of the output PDF - proves it has not changed since. */
   signedHash: string;
   /** Present when the signed PDF was made from other files. */
   source?: SourceRecord;

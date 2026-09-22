@@ -1,5 +1,5 @@
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-// Bundled from node_modules and served from our own origin — never a CDN.
+// Bundled from node_modules and served from our own origin - never a CDN.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 let library: Promise<typeof import('pdfjs-dist')> | undefined;

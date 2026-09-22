@@ -164,7 +164,7 @@ describe('non-Latin names and text', () => {
 
   it('accepts accented text in a text field', async () => {
     const fields: FieldSpec[] = [
-      { kind: 'text', value: 'Zażółć gęślą jaźń — Straße, Émilie', placement: { page: 0, x: 60, y: 60, width: 300, height: 20 } },
+      { kind: 'text', value: 'Zażółć gęślą jaźń - Straße, Émilie', placement: { page: 0, x: 60, y: 60, width: 300, height: 20 } },
     ];
     await expect(sign({ fields })).resolves.toBeDefined();
   });

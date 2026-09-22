@@ -9,7 +9,7 @@ const HEX_64 = /^[0-9a-f]{64}$/;
  * Validates untrusted JSON as an audit record.
  *
  * A record file arrives from disk or from a counterparty, so it is checked
- * rather than trusted — a malformed record must fail loudly, not verify by
+ * rather than trusted - a malformed record must fail loudly, not verify by
  * accident against an undefined hash.
  */
 export function parseAuditRecord(input: unknown): AuditRecord {
@@ -75,8 +75,8 @@ function validateSource(source: unknown): void {
  * Checks a signed document against its audit record.
  *
  * This is the whole tamper-evidence guarantee: the record states the SHA-256 of
- * the document as sealed, so any later edit — one character, one pixel, one
- * byte of metadata — changes the digest and reports as tampered.
+ * the document as sealed, so any later edit - one character, one pixel, one
+ * byte of metadata - changes the digest and reports as tampered.
  */
 export async function verifyDocument(pdf: Uint8Array, record: AuditRecord): Promise<VerifyResult> {
   const actualHash = await sha256Hex(pdf);
@@ -172,7 +172,7 @@ export async function reproduceConversion(
 }
 
 /**
- * Finds the source entry a file matches, by content rather than by name —
+ * Finds the source entry a file matches, by content rather than by name -
  * a renamed photo still matches, an edited one with the old name does not.
  */
 export async function matchSourceFile(

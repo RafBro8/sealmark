@@ -52,7 +52,7 @@ async function fingerprintSource(source: SourceInput): Promise<SourceRecord> {
  * Signs a PDF: stamps the requested fields, appends the certificate page, and
  * produces the audit record that makes the result tamper-evident.
  *
- * Pure in/out — no filesystem, no network — so the same call works in Node and
+ * Pure in/out - no filesystem, no network - so the same call works in Node and
  * in the browser.
  */
 export async function signDocument(options: SignOptions): Promise<SignResult> {
@@ -141,7 +141,7 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
   }
 
   // Pin the producer and modification date so identical inputs yield identical
-  // bytes — which is what makes the signed hash reproducible.
+  // bytes - which is what makes the signed hash reproducible.
   pdf.setProducer(PRODUCER);
   pdf.setModificationDate(now);
 

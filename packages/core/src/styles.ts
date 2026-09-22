@@ -2,7 +2,7 @@
  * The signature faces a signer can choose between.
  *
  * Every face here was checked to cover Polish, Western and Eastern European
- * letters before it was admitted — several attractive script fonts were
+ * letters before it was admitted - several attractive script fonts were
  * rejected because they cannot write "ł" or "č", and a style that fails on a
  * signer's own name is worse than no choice at all. The styles test enforces
  * this for any face added later.

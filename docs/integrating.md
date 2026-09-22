@@ -30,7 +30,7 @@ A demonstration, and the reason a prospect believes the rest of the pitch.
 
 > ### Sign documents here
 >
-> Need a contract, waiver or form signed? Use our signing tool — free, and
+> Need a contract, waiver or form signed? Use our signing tool - free, and
 > genuinely private. Your document is never uploaded: it is signed inside your
 > own browser and saved straight back to your device.
 >
@@ -52,7 +52,7 @@ Deferred until both domains are live.
 
 ## 2. Embed it
 
-A versioned `<sealmark-sign>` custom element, one package every client shares —
+A versioned `<sealmark-sign>` custom element, one package every client shares -
 so a fix reaches all of them and nothing gets forked per client.
 
 ```html
@@ -67,20 +67,20 @@ so a fix reaches all of them and nothing gets forked per client.
 
 Design constraints, decided and worth keeping:
 
-- **Loads nothing until someone signs.** The heavy parts — the PDF renderer, the
-  stamping engine, the signing fonts — stay behind a dynamic import, the same
+- **Loads nothing until someone signs.** The heavy parts - the PDF renderer, the
+  stamping engine, the signing fonts - stay behind a dynamic import, the same
   split the app already uses. A client's page weight barely moves.
 - **Themed with CSS variables**, not a build flag, so it inherits the site it
   sits in without a per-client build.
 - **Still no server.** Signing happens in the visitor's browser, which is why
-  there is no per-client hosting cost — and why neither GLD nor the client
+  there is no per-client hosting cost - and why neither GLD nor the client
   carries a duty of care over documents in transit.
 - **Versioned URL.** `v1` never changes behaviour under a client's feet.
 
 One thing genuinely changes for an embedded build: the deployed
 Content-Security-Policy says `frame-ancestors 'none'`, and an embed needs the
 client's own origin allowed instead. That is a per-client header, not a code
-change — see [deploying.md](deploying.md).
+change - see [deploying.md](deploying.md).
 
 **Build this when the first client is paying for it, not before.**
 
@@ -94,7 +94,7 @@ somewhere:
 
 - emailed to the business when it is signed
 - posted into their CRM, booking system or practice software
-- dropped into their storage — Drive, Dropbox, S3
+- dropped into their storage - Drive, Dropbox, S3
 - a copy emailed to the signer for their records
 
 Each of those is bespoke glue against whatever the client already runs, which is
@@ -107,7 +107,7 @@ document templates so staff aren't uploading the same contract every time.
 or level-2 embed. The moment a signed file is emailed or posted onward, it isn't.
 The accurate version there:
 
-> Your document is signed in your browser and sent only to [the business] —
+> Your document is signed in your browser and sent only to [the business] -
 > never to a third-party signing service.
 
 Still a strong claim, and still true. Get this wrong on a client site and it is
@@ -120,7 +120,7 @@ the client who is making a false statement to their customers.
 Settled terms, recorded here so a quote doesn't have to be reinvented:
 
 - **One-off integration fee** per client.
-- **Optional annual maintenance** buying support and upgrades — never unlimited
+- **Optional annual maintenance** buying support and upgrades - never unlimited
   free updates.
 - **New features are charged for.**
 - **Non-exclusive licence** per client; ownership of Sealmark stays with Good
@@ -146,7 +146,7 @@ Worth saying plainly to a prospect, because it is where a deal goes wrong later:
 
 - It is **not remote signing**. Sealmark signs a document in front of the person
   holding it. Sending a contract to a counterparty to sign in their own time is a
-  different product with a different privacy model — it needs a server, and the
+  different product with a different privacy model - it needs a server, and the
   "never leaves your browser" promise stops being true.
 - It is **not a certificate-authority signature**. Tamper evidence is a SHA-256
   hash plus a certificate page, optionally anchored by an RFC 3161 trusted

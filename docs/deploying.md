@@ -1,7 +1,7 @@
 # Deploying Sealmark
 
 Sealmark is a static site. There is no server, no database and no runtime
-secret — the build produces a folder of files, and any static host can serve it.
+secret - the build produces a folder of files, and any static host can serve it.
 That is also the privacy claim: nothing to deploy means nothing to breach.
 
 This is the checklist for putting it on **sealmark.app**, and for putting a copy
@@ -28,20 +28,20 @@ Everything lands in `packages/web/dist`:
 
 `_headers` and `_redirects` are plain files copied from `packages/web/public/`.
 Some hosts read them as they are; Vercel does not, and gets the same rules from
-the generated `vercel.json` instead — see below.
+the generated `vercel.json` instead - see below.
 
 ---
 
 ## Where it is deployed now
 
-**https://sealmark-ten.vercel.app** — Vercel project `raf-dev/sealmark`, no
+**https://sealmark-ten.vercel.app** - Vercel project `raf-dev/sealmark`, no
 custom domain attached, so `sealmark.app` is still free to point wherever you
 like.
 
 A note on how it got there: `vercel deploy` normally creates a *preview*, but
 Vercel promotes a project's **first** deployment to production automatically. So
 that URL is the production target of the Vercel project. It is still only a
-`.vercel.app` address — "production" in Vercel's sense, not in yours. Every later
+`.vercel.app` address - "production" in Vercel's sense, not in yours. Every later
 `vercel deploy` is a preview with its own URL; `--prod` is what promotes one.
 
 ---
@@ -68,9 +68,9 @@ about the security headers.
 
 `vercel.json` carries the build settings, the security headers and the SPA
 fallback. Vercel reads neither `_headers` nor `_redirects`, so both are
-translated into it — see below.
+translated into it - see below.
 
-**The GitHub repo is connected, so a push to `main` deploys on its own** —
+**The GitHub repo is connected, so a push to `main` deploys on its own** -
 confirmed by watching a deployment start one second after a push, with nothing
 run locally. Pull requests get their own preview URLs. Note that `vercel project
 inspect` does not show the Git connection, so do not read its absence there as
@@ -92,7 +92,7 @@ Create a **Static Site**, point it at the repo, set the build command and
 publish directory above, and then add, in `render.yaml` or the dashboard:
 
 - every header from `packages/web/public/_headers`, including the
-  Content-Security-Policy — without it the privacy claim is a promise rather
+  Content-Security-Policy - without it the privacy claim is a promise rather
   than something the browser enforces
 - a rewrite of `/*` to `/index.html`
 
@@ -110,12 +110,12 @@ node scripts/sync-host-config.mjs
 ```
 
 `packages/web/host-config.test.ts` fails if `vercel.json` has drifted from
-`_headers`, so the two cannot silently disagree — a tightened policy in one file
+`_headers`, so the two cannot silently disagree - a tightened policy in one file
 and a stale one in the other is exactly the failure that would go unnoticed.
 
 The generated config also contains the equivalent of `_redirects`: a rewrite of
 everything to `/index.html`. Vercel checks rewrites only after looking for a real
-file, so it cannot shadow the assets, the service worker or the manifest — all
+file, so it cannot shadow the assets, the service worker or the manifest - all
 verified against the live deployment.
 
 ---
@@ -124,29 +124,29 @@ verified against the live deployment.
 
 From `packages/web/public/_headers`:
 
-- **Content-Security-Policy** — `default-src 'self'` with
+- **Content-Security-Policy** - `default-src 'self'` with
   `connect-src 'self' https://rfc3161.ai.moda`. This is the privacy claim made
   enforceable: the browser itself blocks any attempt to send a document
   anywhere. The one allowed outside host is the timestamp authority, which
   receives a 67-byte hash and never the document.
-- **frame-ancestors 'none'** — nobody can frame sealmark.app and overlay a fake
+- **frame-ancestors 'none'** - nobody can frame sealmark.app and overlay a fake
   signing prompt.
 - **X-Content-Type-Options, Referrer-Policy, Cross-Origin-Opener-Policy,
-  Permissions-Policy** — ordinary hardening; the last one switches off camera,
+  Permissions-Policy** - ordinary hardening; the last one switches off camera,
   microphone, geolocation and payment, none of which Sealmark asks for.
-- **no-cache on `/sw.js`, `/index.html`, `/manifest.webmanifest`** — so a
+- **no-cache on `/sw.js`, `/index.html`, `/manifest.webmanifest`** - so a
   deployed fix actually reaches people who already installed the app. Hashed
   assets under `/assets/` are immutable and cached for a year.
 
 When the embeddable version ships, `frame-ancestors 'none'` is the line that has
-to change for that build, and only for that build — see
+to change for that build, and only for that build - see
 [integrating.md](integrating.md).
 
 ---
 
 ## DNS
 
-Nothing here is done yet — `sealmark.app` points nowhere, which is why the app
+Nothing here is done yet - `sealmark.app` points nowhere, which is why the app
 is on a `.vercel.app` address for now.
 
 When you are ready, add the domain in **Vercel → Project → Settings → Domains**
@@ -154,9 +154,9 @@ first, then create the records it displays at the registrar. Use the values
 Vercel shows rather than any written here; they are per-project and they change.
 The shape is always:
 
-- apex `sealmark.app` — an A record at the host's address (an apex CNAME is not
+- apex `sealmark.app` - an A record at the host's address (an apex CNAME is not
   valid DNS, which is why hosts publish an IP for this)
-- `www.sealmark.app` — a CNAME to the host, redirecting to the apex
+- `www.sealmark.app` - a CNAME to the host, redirecting to the apex
 
 `.app` is on the HSTS preload list, so browsers refuse plain HTTP for it
 outright. There is no http→https redirect to configure and no way to serve the
@@ -180,7 +180,7 @@ CI runs exactly this on every push to `main`
 
 Also worth doing once before the first deploy:
 
-- `node scripts/third-party-notices.mjs` — regenerate THIRD-PARTY-NOTICES.md if
+- `node scripts/third-party-notices.mjs` - regenerate THIRD-PARTY-NOTICES.md if
   dependencies changed. It must ship with any build installed for a client.
 - Check `measure-bundle` output hasn't crept: the first visit is the promise,
   and it is currently ~66 KB.
@@ -210,7 +210,7 @@ Then, by hand, once:
 2. Install it (address-bar install icon), then turn off the network and sign
    something offline.
 3. Sign once with a timestamp to confirm `rfc3161.ai.moda` is reachable through
-   the deployed policy — the one network call Sealmark makes.
+   the deployed policy - the one network call Sealmark makes.
 
 ---
 
@@ -222,7 +222,7 @@ prompt on their next visit, because `index.html` and `sw.js` are served
 mid-signature.
 
 **Rolling back:** every host keeps previous deployments and can promote one
-instantly from its dashboard — faster than a revert commit and a rebuild. Do
+instantly from its dashboard - faster than a revert commit and a rebuild. Do
 that first, then fix forward. A rollback also rolls the service worker back, so
 installed copies follow within a visit.
 
@@ -236,14 +236,14 @@ the lot. In rough order of how likely each is to actually break:
 
 1. **Saving the two files.** Signing produces a PDF *and* a `.sealmark.json`
    record, saved one after the other. iOS Safari has historically been awkward
-   about a second programmatic download. Check that **both** land in Files — the
+   about a second programmatic download. Check that **both** land in Files - the
    record is the evidence, and a signed PDF without it is much weaker.
 2. **Placing fields by touch.** Tap to place, drag to move, drag the corner
    handle to resize. The code uses pointer events, which should cover touch, but
    that has never been tried on a touchscreen. Watch for the page scrolling when
    you meant to drag a field.
 3. **A photo straight from the camera.** Take a picture of a paper page and sign
-   it. iPhones shoot HEIC, and Safari is the only browser that can decode it —
+   it. iPhones shoot HEIC, and Safari is the only browser that can decode it -
    so this is the one place it should work *better* than on a desktop. If it
    cannot, the app should say so and point at Settings › Camera › Formats rather
    than failing silently.
@@ -256,7 +256,7 @@ the lot. In rough order of how likely each is to actually break:
    rotating to landscape does not break the layout, and the Verify screen accepts
    the two files you just saved and reports Verified.
 
-Anything that fails here is worth reporting with the iOS version — WebKit bugs
+Anything that fails here is worth reporting with the iOS version - WebKit bugs
 tend to be version-specific.
 
 ---
@@ -265,6 +265,6 @@ tend to be version-specific.
 
 Same build, a different domain. The parts that change per client are the
 Content-Security-Policy `frame-ancestors` line, if it is embedded rather than
-linked, and the branding. Ship `THIRD-PARTY-NOTICES.md` alongside it — the
+linked, and the branding. Ship `THIRD-PARTY-NOTICES.md` alongside it - the
 dependencies are all MIT, Apache-2.0 or BSD, which permits paid installation
 provided the notices travel with the product.

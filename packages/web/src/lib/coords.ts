@@ -5,8 +5,8 @@ import type { Placement } from '@sealmark/core';
  *
  * PDF user space puts the origin at the bottom-left of the page and measures in
  * points. The DOM puts it at the top-left and measures in CSS pixels. Field
- * positions are stored in PDF points — that is what gets stamped, so it is the
- * source of truth — and converted for display only.
+ * positions are stored in PDF points - that is what gets stamped, so it is the
+ * source of truth - and converted for display only.
  */
 
 export interface PageGeometry {

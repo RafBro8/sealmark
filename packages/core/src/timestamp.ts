@@ -9,12 +9,12 @@ import { TIMESTAMP_ENDPOINT, MAX_CLOCK_DRIFT_MS } from './timestamp-config.js';
  *
  * A timestamp authority signs a statement that a given SHA-256 existed at a
  * given moment. Sealmark asks for one over the *signed* PDF's hash, so the
- * record gains independent proof of when that exact file existed — something a
+ * record gains independent proof of when that exact file existed - something a
  * forger cannot produce for a past date, because the authority's clock and
  * signing key are not theirs.
  *
  * Only the hash is ever sent. This module builds the request and checks the
- * reply; it makes no network call of its own — the caller passes `fetch` in.
+ * reply; it makes no network call of its own - the caller passes `fetch` in.
  */
 
 export { TIMESTAMP_ENDPOINT, MAX_CLOCK_DRIFT_MS };

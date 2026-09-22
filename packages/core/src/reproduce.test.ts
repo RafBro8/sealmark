@@ -62,7 +62,7 @@ describe('reproduceConversion', () => {
     expect((await reproduceConversion(record, [png, jpeg])).reproduced).toBe(true);
   });
 
-  it('uses the recorded page size — the wrong one does not reproduce', async () => {
+  it('uses the recorded page size - the wrong one does not reproduce', async () => {
     const record = await signedFromPhotos('a4');
     const doctored: AuditRecord = { ...record, source: { ...record.source!, pageSize: 'letter' } };
     expect((await reproduceConversion(doctored, [jpeg, png])).reproduced).toBe(false);

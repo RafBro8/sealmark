@@ -16,7 +16,7 @@ export function fetchFont(url: string, label: string): Promise<Uint8Array> {
 /**
  * Font for dates, text fields, converted text and the certificate page.
  *
- * Loaded only when first needed — signing or converting a text file — since
+ * Loaded only when first needed - signing or converting a text file - since
  * browsing the intake screen does not need it.
  */
 export function textFontBytes(): Promise<Uint8Array> {
@@ -54,8 +54,8 @@ function lineHeight(metrics: TextMetrics, size: number): number {
  * Largest font size at which `text` fits the box, mirroring the core's fitting
  * so the preview does not drift from the stamped result.
  *
- * Both constraints matter. Checking width alone lets a script face — whose
- * glyphs are far taller than their point size — preview much larger than it
+ * Both constraints matter. Checking width alone lets a script face - whose
+ * glyphs are far taller than their point size - preview much larger than it
  * will be stamped.
  */
 export function fitTextSize(

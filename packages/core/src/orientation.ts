@@ -13,8 +13,8 @@ export type Orientation = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 const TAG_ORIENTATION = 0x0112;
 
 /**
- * Reads the EXIF orientation of a JPEG. Anything unexpected — no EXIF, a
- * truncated file, a malformed segment — yields 1, because a photo drawn as
+ * Reads the EXIF orientation of a JPEG. Anything unexpected - no EXIF, a
+ * truncated file, a malformed segment - yields 1, because a photo drawn as
  * stored is a better failure than no photo at all.
  */
 export function jpegOrientation(bytes: Uint8Array): Orientation {
