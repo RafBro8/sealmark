@@ -191,8 +191,9 @@ export function Legal({ onClose }: { onClose: () => void }) {
         <section>
           <h2>Contact and changes</h2>
           <p>
-            Sealmark is built and run by Good Looking Digital. Changes to this page are recorded in
-            the project's public history, so you can see exactly what changed and when.
+            Sealmark is built and run by Good Looking Digital LLC, a company registered in
+            Illinois, USA. Changes to this page are recorded in the project's public history, so
+            you can see exactly what changed and when.
           </p>
           {CONTACT_EMAIL ? (
             <p>
