@@ -1,5 +1,5 @@
 import type { FieldKind, SignatureStyleId } from '@sealmark/core';
-import { initialsOf } from '@sealmark/core/light';
+import { initialsOf, isoDate } from '@sealmark/core/light';
 import { FIELD_LABEL, type PlacedField, type Signer } from '../types.js';
 import { DateIcon, InitialsIcon, ShieldIcon, SignatureIcon, TextIcon } from './Icons.js';
 import { StylePicker } from './StylePicker.js';
@@ -196,7 +196,7 @@ function previewValue(field: PlacedField, signer: Signer): string {
     case 'initials':
       return initialsOf(signer.name);
     case 'date':
-      return new Date().toISOString().slice(0, 10);
+      return isoDate(new Date());
     case 'text':
       return field.value ?? '';
   }

@@ -48,12 +48,21 @@ export function initialsOf(name: string): string {
 }
 
 /**
- * ISO `YYYY-MM-DD` in UTC.
+ * ISO `YYYY-MM-DD` for the signer's own calendar day.
  *
  * Deliberately not locale-formatted: `03/04/2026` means two different days
  * depending on the reader's country, which is exactly the ambiguity you do not
  * want on an executed contract.
+ *
+ * Deliberately local rather than UTC. Someone signing in Chicago at 7pm on
+ * 1 October is already on 2 October in UTC, and `toISOString()` used to date
+ * their document a day into the future. The date a person writes next to their
+ * signature is the date where they are standing. The UTC instant is still
+ * recorded, separately and precisely, as `signedAt` and in the timestamp token.
  */
 export function isoDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

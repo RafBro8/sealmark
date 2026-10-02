@@ -25,6 +25,22 @@ describe('initialsOf', () => {
 
 describe('isoDate', () => {
   it('formats unambiguously as YYYY-MM-DD', () => {
-    expect(isoDate(new Date('2026-03-04T23:30:00Z'))).toBe('2026-03-04');
+    // Built from local fields, so the expectation holds in any timezone.
+    expect(isoDate(new Date(2026, 2, 4, 12, 0))).toBe('2026-03-04');
+  });
+
+  it('dates the signer local day, not the UTC day', () => {
+    // 7:30pm on 1 October in Chicago is already 2 October in UTC. Stamping
+    // the UTC day put tomorrow's date next to a signature made today.
+    expect(isoDate(new Date(2026, 9, 1, 19, 30))).toBe('2026-10-01');
+  });
+
+  it('holds across a year boundary', () => {
+    // 11pm on New Year's Eve locally is next year in UTC.
+    expect(isoDate(new Date(2026, 11, 31, 23, 0))).toBe('2026-12-31');
+  });
+
+  it('pads single-digit months and days', () => {
+    expect(isoDate(new Date(2026, 0, 9, 9, 0))).toBe('2026-01-09');
   });
 });
