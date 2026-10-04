@@ -9,7 +9,7 @@ one byte of a sealed document - a digit in a price, a word in a clause, a scrap 
 metadata - and verification fails.
 
 > **Status:** Signing, verification in the browser and on the command line,
-> in-browser document conversion, signature styles, trusted timestamps, a 66 KB
+> in-browser document conversion, signature styles, trusted timestamps, a 67 KB
 > first visit and offline use are complete and tested. Remote signing remains.
 > See [Roadmap](#roadmap).
 
@@ -97,7 +97,7 @@ because a reload in the middle of placing fields would lose them. Tested by serv
 a changed build to a page running the saved one: the notice appeared, the page kept
 running the old version, and Reload switched it.
 
-**What this costs.** The page itself still becomes usable after 66 KB. The service
+**What this costs.** The page itself still becomes usable after 67 KB. The service
 worker then saves the rest in the background - 30 files, about 1.9 MB gzipped or
 1.6 MB with Brotli - which is what makes offline use possible. `_headers` tells
 hosts to re-check `sw.js`, `index.html` and the manifest on every visit, so a
@@ -410,7 +410,7 @@ other host is blocked by the browser, and the timestamp request goes through.
 
 ### Download size
 
-A first visit downloads **66 KB** of gzipped code - the app shell and the intake
+A first visit downloads **67 KB** of gzipped code - the app shell and the intake
 screen. Everything else arrives when it is first needed:
 
 | When | What loads |
@@ -510,7 +510,7 @@ Putting signing into someone else's site: **[docs/integrating.md](docs/integrati
 1. **Core engine and CLI** - signing, hashing, certificate, verification. *Complete.*
 2. **Browser interface** - render the PDF, click to place fields, live preview, download. *Complete.*
 3. **Document conversion** - photos and text converted in the browser, office documents guided to a faithful export, source files fingerprinted into the record. *Complete.*
-4. **Evidence hardening** - RFC 3161 trusted timestamps, a 66 KB first visit, offline use and installation. *Complete.*
+4. **Evidence hardening** - RFC 3161 trusted timestamps, a 67 KB first visit, offline use and installation. *Complete.*
 5. **Signature styles** - five signature faces to sign in, each previewed with the signer's own name. *Complete.*
 6. **Remote signing** - send a document to a counterparty to sign. Separate product, separate privacy model.
 

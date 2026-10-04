@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type DragEvent, type ReactNode } from 'reac
 import type { SourceFileInput } from '@sealmark/core';
 import { formatBytes } from '@sealmark/core/light';
 import { CheckIcon } from './Icons.js';
+import { InstallApp } from './InstallApp.js';
 
 const ASSURANCES = [
   'Your document never leaves this tab. Photos and text are converted here, with no upload and no server.',
@@ -159,6 +160,8 @@ export function Intake({ onFiles, declared, onCancelDeclared, converting, error 
             </li>
           ))}
         </ul>
+
+        <InstallApp />
       </div>
     </div>
   );
