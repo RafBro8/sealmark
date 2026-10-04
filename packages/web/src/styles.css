@@ -238,8 +238,12 @@ button, input { font: inherit; color: inherit; }
   color: var(--ink-soft);
 }
 
-.install-note {
+/* Two classes, because `.intake p` centres its paragraphs with `margin: 0 auto`
+   and caps them at 42ch, and a single class loses to it. Left here, under the
+   button it belongs to, rather than floating in the middle of the column. */
+.install-app .install-note {
   margin: 12px 0 0;
+  max-width: 52ch;
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--ink-soft);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DownloadIcon, MinusIcon, PlusIcon } from './Icons.js';
 
 /**
  * Turns "installs as an app from your browser" from a claim into something a
@@ -70,17 +71,19 @@ export function InstallApp() {
   return (
     <div className="install-app">
       {prompt ? (
-        <button type="button" className="btn btn-quiet" onClick={install}>
+        <button type="button" className="btn" onClick={install}>
+          <DownloadIcon size={14} />
           Install Sealmark on this device
         </button>
       ) : (
         <button
           type="button"
-          className="btn btn-quiet"
+          className="btn"
           aria-expanded={showSteps}
           onClick={() => setShowSteps((open) => !open)}
         >
-          {showSteps ? 'Hide how to install' : 'How to install it on this device'}
+          {showSteps ? <MinusIcon size={13} /> : <PlusIcon size={13} />}
+          {showSteps ? 'Hide the steps' : 'How to install it on this device'}
         </button>
       )}
 
