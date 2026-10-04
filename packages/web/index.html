@@ -10,6 +10,48 @@
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#8f2d3f" />
+
+    <!--
+      The app is served from sealmark.app and, identically, from the Vercel
+      deployment URL behind it. Without this they are two copies of the same
+      page as far as a crawler is concerned.
+    -->
+    <link rel="canonical" href="https://sealmark.app/" />
+
+    <!--
+      Absolute URLs on purpose: a scraper reads this markup from its own
+      server, where a relative path resolves to nothing.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sealmark" />
+    <meta property="og:url" content="https://sealmark.app/" />
+    <meta
+      property="og:title"
+      content="Sealmark - tamper-evident electronic signatures"
+    />
+    <meta
+      property="og:description"
+      content="Sign PDFs in your browser. Your files are never uploaded."
+    />
+    <meta property="og:image" content="https://sealmark.app/og-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Sealmark: sign PDFs in your browser, your files are never uploaded."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Sealmark - tamper-evident electronic signatures"
+    />
+    <meta
+      name="twitter:description"
+      content="Sign PDFs in your browser. Your files are never uploaded."
+    />
+    <meta name="twitter:image" content="https://sealmark.app/og-card.png" />
+
     <link rel="icon" href="/seal.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />

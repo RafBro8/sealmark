@@ -1,0 +1,7 @@
+# Sealmark is one page. There is nothing to keep out of an index, and no
+# private area to hide: the app has no accounts and no server, and documents
+# never leave the browser in the first place.
+User-agent: *
+Allow: /
+
+Sitemap: https://sealmark.app/sitemap.xml
