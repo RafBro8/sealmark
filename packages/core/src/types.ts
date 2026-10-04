@@ -162,6 +162,12 @@ export interface AuditRecord {
   signatureStyle?: SignatureStyleId;
   /** Independent proof, from a timestamp authority, of when the signed PDF existed. */
   timestamp?: TimestampRecord;
+  /**
+   * What was stamped, and where. `page` counts from **one**, matching the
+   * `events` below, the certificate page, and what a PDF reader shows in its
+   * page box. Internally pages are indexed from zero; the conversion happens
+   * when this record is built, so nothing a reader sees is ever off by one.
+   */
   fields: Array<{ kind: FieldKind; page: number; value: string }>;
   events: AuditEvent[];
   producer: string;

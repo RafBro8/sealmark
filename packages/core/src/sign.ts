@@ -164,7 +164,9 @@ export async function signDocument(options: SignOptions): Promise<SignResult> {
     signedHash,
     ...(source ? { source } : {}),
     ...(styleId ? { signatureStyle: styleId } : {}),
-    fields: stamped,
+    // Stamping indexes pages from zero; every reader of this record counts
+    // from one, as the events and the certificate page already do.
+    fields: stamped.map((field) => ({ ...field, page: field.page + 1 })),
     events,
     producer: PRODUCER,
   };

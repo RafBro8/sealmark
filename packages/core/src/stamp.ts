@@ -6,6 +6,11 @@ import { assertRenderable } from './glyphs.js';
 
 export interface StampedField {
   kind: FieldKind;
+  /**
+   * Zero-based page index, matching `Placement.page` and the array returned by
+   * `getPages()`. Everything a person reads counts from one instead, so this is
+   * converted at the edge: see `AuditRecord.fields` and the certificate page.
+   */
   page: number;
   value: string;
 }

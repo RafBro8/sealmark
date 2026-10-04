@@ -74,9 +74,39 @@ describe('signDocument', () => {
   it('derives signature and date values from the signer and the clock', async () => {
     const { audit } = await sign();
     expect(audit.fields).toEqual([
-      { kind: 'signature', page: 0, value: 'Jordan Reyes' },
-      { kind: 'date', page: 0, value: '2026-09-15' },
+      { kind: 'signature', page: 1, value: 'Jordan Reyes' },
+      { kind: 'date', page: 1, value: '2026-09-15' },
     ]);
+  });
+
+  it('numbers pages from one in the record, as the events already do', async () => {
+    // The two halves of the record used to disagree: `fields` carried the
+    // zero-based index used to address the page, while `events` and the
+    // certificate counted from one. Anything verifying against `fields` was
+    // pointed a page early.
+    // Built here rather than loaded: the only PDF fixture is a single page,
+    // and on one page an off-by-one is invisible.
+    const blank = await PDFDocument.create();
+    for (let i = 0; i < 3; i++) blank.addPage([612, 792]);
+    const threePages = await blank.save();
+
+    const { audit } = await sign({
+      document: threePages,
+      fields: [
+        { kind: 'signature', placement: { page: 0, x: 60, y: 125, width: 230, height: 45 } },
+        { kind: 'text', value: 'middle', placement: { page: 1, x: 60, y: 60, width: 100, height: 20 } },
+        { kind: 'text', value: 'last', placement: { page: 2, x: 60, y: 60, width: 100, height: 20 } },
+      ],
+    });
+
+    expect(audit.fields.map((f) => f.page)).toEqual([1, 2, 3]);
+
+    // And the two halves must agree, which is the property that actually broke.
+    const pagesFromEvents = audit.events
+      .filter((e) => e.type === 'field.stamped')
+      .map((e) => Number(/on page (\d+):/.exec(e.detail)?.[1]));
+
+    expect(pagesFromEvents).toEqual(audit.fields.map((f) => f.page));
   });
 
   it('logs an audit event for every stage', async () => {
