@@ -1093,6 +1093,9 @@ button, input { font: inherit; color: inherit; }
    the lead-in rather than wrapping into a row that cannot hold two lines. */
 .footer-credit { white-space: nowrap; }
 
+/* The credit used to drop "Designed & Built by" on a phone so the line would
+   still fit on one row. That saved the layout and lost the point of the
+   credit, leaving a bare company name next to nothing. Let it wrap instead. */
 @media (max-width: 640px) {
-  .footer-credit-lead { display: none; }
+  .footer-credit { white-space: normal; }
 }
